@@ -43,4 +43,5 @@ Viste (con `security_invoker`, rispettano la RLS di chi legge):
 
 - Piano Free di Supabase: un progetto con poca attività per 7 giorni va in pausa. Prima delle funzioni notturne si decide tra un ping pianificato e il piano Pro.
 - Piano Free di Netlify: 300 crediti al mese, 15 per ogni pubblicazione in produzione.
-- La RLS oggi blocca tutti tranne il connettore: l'app vedrà dati solo dopo la migrazione 04 con le policy per l'utente di Simone.
+- Accesso dall'app: solo l'utente Supabase Auth di Simone, con le policy della migrazione `20261123132056_owner_policies.sql`. Il connettore Claude usa il ruolo `postgres` e non passa dalle policy.
+- La protezione dalle password compromesse di Supabase richiede il piano Pro: sul Free resta spenta.

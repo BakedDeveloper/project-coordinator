@@ -35,7 +35,7 @@ docs/                architettura e specifica delle viste
 
 ## Regole sui dati
 
-1. **Lo schema esiste solo come migrazioni SQL** in `supabase/migrations/`. Mai modifiche a mano dal pannello di Supabase. Le tre migrazioni presenti sono già applicate al progetto `coordinator`: i nomi dei file hanno la stessa versione registrata in Supabase.
+1. **Lo schema esiste solo come migrazioni SQL** in `supabase/migrations/`. Mai modifiche a mano dal pannello di Supabase. Le migrazioni presenti sono già applicate al progetto `coordinator`: i nomi dei file hanno la stessa versione registrata in Supabase.
 2. **Una migrazione già applicata non si modifica**: se serve un cambio, se ne crea una nuova (`supabase migration new <nome>`).
 3. **Prima di applicare una migrazione mostra cosa farà e aspetta la conferma di Simone.** Usa prima `--dry-run`. Mai `--yes`, mai `db reset --remote`.
 4. Questo repository si collega (`supabase link`) **solo** al progetto `coordinator`. Mai al progetto di Nutrirea.
@@ -76,7 +76,9 @@ docs/                architettura e specifica delle viste
 - Serve la regola di reindirizzamento delle SPA (`/* /index.html 200`), altrimenti ricaricando una pagina interna si ottiene un 404.
 - Le variabili `SUPABASE_URL` e la chiave publishable si impostano nelle variabili d'ambiente di Netlify, non nel codice.
 
-## Da fare prima della prima vista (non ancora fatto)
+## Accesso (fatto il 23/11/2026)
 
-- In Supabase: registrazione pubblica disattivata e utente di Simone creato.
-- Migrazione 04: policy RLS per l'utente di Simone (oggi la RLS blocca tutti tranne il connettore). La prepara la chat del coordinatore e la applica dopo l'ok di Simone.
+- In Supabase la registrazione pubblica è disattivata e c'è un solo utente, quello di Simone.
+- Migrazione `20261123132056_owner_policies.sql`: le policy RLS aprono lettura e scrittura solo a quell'utente (funzione `public.is_coordinator_owner()`); il registro `activity_log` è in sola lettura; si possono cancellare solo righe di `blocks`, `waiting_items`, `time_entries` e `inbox_items`. Ogni altro utente, autenticato o anonimo, non vede niente.
+- Se l'utente di Simone viene ricreato, l'identificativo cambia: serve una nuova migrazione con quello nuovo.
+- La protezione dalle password compromesse di Supabase non è disponibile sul piano Free: password lunga e unica, nel gestore di password.
