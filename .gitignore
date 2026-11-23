@@ -15,3 +15,6 @@ supabase/.branches/
 .DS_Store
 Thumbs.db
 *.log
+# output di Angular e dei test
+/out-tsc
+/coverage
