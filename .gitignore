@@ -18,3 +18,5 @@ Thumbs.db
 # output di Angular e dei test
 /out-tsc
 /coverage
+# configurazione generata da scripts/write-config.mjs
+src/app/data/supabase-config.generated.ts

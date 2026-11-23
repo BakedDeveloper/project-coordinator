@@ -3,10 +3,12 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "config": "node scripts/write-config.mjs",
+    "start": "node scripts/write-config.mjs && ng serve",
+    "build": "node scripts/write-config.mjs && ng build",
+    "watch": "node scripts/write-config.mjs && ng build --watch --configuration development",
+    "test": "node scripts/write-config.mjs --test && ng test",
+    "gen:types": "supabase gen types typescript --project-id cmyocabucpfzsvqyvspc --schema public > src/app/data/database.types.ts"
   },
   "private": true,
   "packageManager": "pnpm@12.16.1",
@@ -17,6 +19,7 @@
     "@angular/forms": "~22.2.7",
     "@angular/platform-browser": "~22.2.7",
     "@angular/router": "~22.2.7",
+    "@supabase/supabase-js": "^2.119.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -26,6 +29,7 @@
     "@angular/compiler-cli": "~22.2.7",
     "jsdom": "^30.0.0",
     "prettier": "^3.8.1",
+    "supabase": "3.0.0",
     "typescript": "~6.0.2",
     "vitest": "^5.0.0"
   },
