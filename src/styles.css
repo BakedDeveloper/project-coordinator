@@ -1,1 +1,65 @@
-/* You can add global styles to this file, and also import other style files */
+/* Base styles and design tokens from docs/viste.md. */
+
+:root {
+  /* Text and background */
+  --color-text: #3a1f45;
+  --color-text-secondary: #6f5c78;
+  --color-background: #fffdfb;
+
+  /* Task status (borders, fills, lines) */
+  --color-status-done: #2e7a22;
+  --color-status-in-progress: #a86f00;
+  --color-status-todo: #6a1f6e;
+  --color-status-blocked: #c0262b;
+
+  /* #a86f00 is 4.19:1 on the background, below the 4.5:1 required for text:
+     use this darker shade when the in-progress colour is used for text. */
+  --color-status-in-progress-text: #946200;
+
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-family);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-status-todo);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
