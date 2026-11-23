@@ -1,0 +1,17 @@
+# dipendenze e build
+node_modules/
+dist/
+.angular/
+# segreti e configurazione locale
+.env
+.env.*
+!.env.example
+supabase/.temp/
+supabase/.branches/
+# editor e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
