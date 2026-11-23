@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "config": "node scripts/write-config.mjs",
+    "gen:config": "node scripts/write-config.mjs",
     "start": "node scripts/write-config.mjs && ng serve",
     "build": "node scripts/write-config.mjs && ng build",
     "watch": "node scripts/write-config.mjs && ng build --watch --configuration development",
