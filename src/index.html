@@ -7,6 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="light dark" />
+    <script>
+      // Applies the last theme before Angular starts, so a reload does not flash.
+      // Same key as THEME_STORAGE_KEY in src/app/theme/theme.service.ts.
+      try {
+        var theme = localStorage.getItem('coordinator.theme');
+        if (theme === 'light' || theme === 'dark') {
+          document.documentElement.dataset.theme = theme;
+        }
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
