@@ -1,24 +1,97 @@
-/* Base styles and design tokens from docs/viste.md. */
+/* Base styles and design tokens (docs/viste.md).
+ *
+ * Every colour used by components is a token defined here: component CSS never
+ * contains a literal colour (checked by scripts/check-styles.mjs, part of pnpm lint).
+ *
+ * Themes:
+ * - light: the default, also forced with <html data-theme="light">;
+ * - dark: when the system asks for it (prefers-color-scheme), or forced with
+ *   <html data-theme="dark">. The two dark blocks below must stay identical
+ *   (the check script compares them).
+ */
 
 :root {
-  /* Text and background */
-  --color-text: #3a1f45;
-  --color-text-secondary: #6f5c78;
-  --color-background: #fffdfb;
-
-  /* Task status (borders, fills, lines) */
-  --color-status-done: #2e7a22;
-  --color-status-in-progress: #a86f00;
-  --color-status-todo: #6a1f6e;
-  --color-status-blocked: #c0262b;
-
-  /* #a86f00 is 4.19:1 on the background, below the 4.5:1 required for text:
-     use this darker shade when the in-progress colour is used for text. */
-  --color-status-in-progress-text: #946200;
-
   --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
+  /* Text on projects.color: project colours are dark in both themes. */
+  --color-on-project: #ffffff;
+}
+
+:root,
+:root[data-theme='light'] {
   color-scheme: light;
+
+  /* Surfaces */
+  --color-background: #fffdfb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4eef6;
+  --color-border: #e4d9e8;
+  --color-divider: #ece4ef;
+  --color-error-surface: #fff5f5;
+
+  /* Text */
+  --color-text: #3a1f45;
+  --color-text-secondary: #6f5c78;
+
+  /* Primary actions (pressed filter, submit button) */
+  --color-accent: #6a1f6e;
+  --color-on-accent: #ffffff;
+
+  /* Task status. The in-progress fill (#a86f00) is 4.19:1 on the background:
+     text uses the darker in-progress-text shade. */
+  --color-status-done: #2e7a22;
+  --color-status-in-progress: #a86f00;
+  --color-status-in-progress-text: #946200;
+  --color-status-todo: #6a1f6e;
+  --color-status-blocked: #c0262b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --color-background: #1c1520;
+    --color-surface: #271d2c;
+    --color-surface-muted: #33263a;
+    --color-border: #4a3a52;
+    --color-divider: #3a2d41;
+    --color-error-surface: #3a1c22;
+
+    --color-text: #f3ebf5;
+    --color-text-secondary: #bba9c3;
+
+    --color-accent: #d9a3e6;
+    --color-on-accent: #1c1520;
+
+    --color-status-done: #7fd36b;
+    --color-status-in-progress: #e8ad4a;
+    --color-status-in-progress-text: #e8ad4a;
+    --color-status-todo: #d9a3e6;
+    --color-status-blocked: #ff8a8e;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-background: #1c1520;
+  --color-surface: #271d2c;
+  --color-surface-muted: #33263a;
+  --color-border: #4a3a52;
+  --color-divider: #3a2d41;
+  --color-error-surface: #3a1c22;
+
+  --color-text: #f3ebf5;
+  --color-text-secondary: #bba9c3;
+
+  --color-accent: #d9a3e6;
+  --color-on-accent: #1c1520;
+
+  --color-status-done: #7fd36b;
+  --color-status-in-progress: #e8ad4a;
+  --color-status-in-progress-text: #e8ad4a;
+  --color-status-todo: #d9a3e6;
+  --color-status-blocked: #ff8a8e;
 }
 
 *,
@@ -51,7 +124,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-status-todo);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
