@@ -18,7 +18,8 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         title: 'Tutti i progetti · Coordinatore',
-        loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+        loadComponent: () =>
+          import('./all-projects/all-projects.page').then((m) => m.AllProjectsPage),
       },
     ],
   },

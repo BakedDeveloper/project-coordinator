@@ -1,0 +1,77 @@
+<div class="page-header">
+  <h1 class="page-header__title">Tutti i progetti</h1>
+  <div class="filters" role="group" aria-label="Ambito dei progetti">
+    @for (f of filters; track f.value) {
+      <button
+        type="button"
+        class="filter"
+        [attr.aria-pressed]="filter() === f.value"
+        (click)="filter.set(f.value)"
+      >
+        {{ f.label }}
+      </button>
+    }
+  </div>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="message" role="status">Carico le priorità…</p>
+  }
+  @case ('error') {
+    <div class="message message--error" role="alert">
+      <p>Non riesco a caricare le priorità.</p>
+      <button type="button" class="retry" (click)="load()">Riprova</button>
+    </div>
+  }
+  @default {
+    @for (group of groups(); track group.level) {
+      <section class="group" [attr.aria-labelledby]="'level-' + group.level">
+        <h2 class="group__header" [id]="'level-' + group.level">
+          <span class="group__level">Livello {{ group.level }}</span>
+          <span class="group__rule">{{ group.rule }}</span>
+          <span class="group__count">{{ group.count }} task</span>
+        </h2>
+
+        @if (group.level !== 3) {
+          <ol class="task-list">
+            @for (task of group.tasks; track task.id) {
+              <li><app-task-card [task]="task" [today]="today()" /></li>
+            }
+          </ol>
+        } @else {
+          <ul class="projects">
+            @for (project of group.projects; track project.projectId) {
+              <li class="project">
+                <button
+                  type="button"
+                  class="project__toggle"
+                  [attr.aria-expanded]="isExpanded(project.projectId)"
+                  [attr.aria-controls]="'level3-' + project.projectId"
+                  (click)="toggle(project.projectId)"
+                >
+                  <span class="project__tag" [style.background-color]="project.projectColor">
+                    {{ project.projectName }}
+                  </span>
+                  <span class="project__count">{{ project.tasks.length }} task</span>
+                  <span class="project__chevron" aria-hidden="true">
+                    {{ isExpanded(project.projectId) ? '▴' : '▾' }}
+                  </span>
+                </button>
+                @if (isExpanded(project.projectId)) {
+                  <ol class="task-list" [id]="'level3-' + project.projectId">
+                    @for (task of project.tasks; track task.id) {
+                      <li><app-task-card [task]="task" [today]="today()" /></li>
+                    }
+                  </ol>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    } @empty {
+      <p class="message">Niente da fare.</p>
+    }
+  }
+}

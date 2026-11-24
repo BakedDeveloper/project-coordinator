@@ -1,0 +1,32 @@
+<article class="card" [class.card--blocked]="task().isBlocked">
+  <div class="card__rail">
+    @if (due(); as d) {
+      <p class="card__due" [class.card__due--overdue]="d.overdue">{{ d.text }}</p>
+    }
+    @if (task().checkpointName; as checkpoint) {
+      <p class="card__checkpoint">{{ checkpoint }}</p>
+    }
+  </div>
+
+  <div class="card__body">
+    <span class="card__project" [style.background-color]="color()">{{ task().projectName }}</span>
+    <h3 class="card__title">{{ task().title }}</h3>
+    @if (task().nextAction; as next) {
+      <p class="card__next"><span class="card__next-label">Prossima azione:</span> {{ next }}</p>
+    }
+
+    @if (task().blocksOthers || waiting() || task().isBlocked) {
+      <ul class="card__labels">
+        @if (task().blocksOthers) {
+          <li class="label label--unblocks">sblocca altri</li>
+        }
+        @if (waiting(); as w) {
+          <li class="label label--waiting">{{ w }}</li>
+        }
+        @if (task().isBlocked) {
+          <li class="label label--blocked">bloccato</li>
+        }
+      </ul>
+    }
+  </div>
+</article>

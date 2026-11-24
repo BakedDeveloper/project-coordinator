@@ -1,0 +1,94 @@
+.card {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr);
+  border: 1px solid #e4d9e8;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.card--blocked {
+  border: 2px dashed var(--color-status-blocked);
+}
+
+.card__rail {
+  padding: 0.75rem 0.5rem 0.75rem 0.75rem;
+  border-right: 1px solid #ece4ef;
+  font-size: 0.8125rem;
+}
+
+.card__rail p {
+  margin: 0;
+}
+
+.card__due {
+  font-weight: 600;
+}
+
+.card__due--overdue {
+  color: var(--color-status-blocked);
+}
+
+.card__checkpoint {
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.card__body {
+  display: grid;
+  gap: 0.375rem;
+  justify-items: start;
+  padding: 0.75rem;
+}
+
+.card__project {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.card__next {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.card__next-label {
+  color: var(--color-text-secondary);
+}
+
+.card__labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0.125rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.label {
+  padding: 0.0625rem 0.5rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.label--unblocks {
+  color: var(--color-status-todo);
+}
+
+.label--waiting {
+  color: var(--color-status-in-progress-text);
+}
+
+.label--blocked {
+  color: var(--color-status-blocked);
+}
