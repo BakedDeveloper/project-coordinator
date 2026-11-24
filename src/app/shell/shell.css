@@ -1,0 +1,30 @@
+.shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #ece4ef;
+}
+
+.shell__brand {
+  color: var(--color-text);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.shell__sign-out {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-text-secondary);
+  border-radius: 0.5rem;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.shell__main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}

@@ -1,0 +1,15 @@
+<header class="shell__header">
+  <a class="shell__brand" routerLink="/">Coordinatore</a>
+  <button
+    class="shell__sign-out"
+    type="button"
+    (click)="signOut()"
+    [attr.aria-disabled]="signingOut()"
+  >
+    Esci
+  </button>
+</header>
+
+<main class="shell__main">
+  <router-outlet />
+</main>
