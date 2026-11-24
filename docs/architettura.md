@@ -31,10 +31,11 @@ Punti da sapere per l'app:
 - `tasks.position` e `tasks.estimated_hours`: ordine e stima nel piano. Oggi li ha solo Nutrirea (50 task, 275 ore, 10 ore a settimana).
 - `tasks.description`: dettagli anche tecnici, mai dati sensibili.
 - `projects.status`: `active`, `paused`, `closed`; i progetti chiusi restano visibili (`closed_at`).
+- `projects.color` e `features.color`: colori `#rrggbb` (progetto scuro con testo bianco, feature chiara con testo scuro), impostati dalla migrazione `20261124104220_colors_and_priority_rank.sql`.
 
 Viste (con `security_invoker`, rispettano la RLS di chi legge):
 - `v_tasks`: ogni task con `project_name`, `project_scope`, `project_status`, `checkpoint_name`, `checkpoint_due_date`, `effective_due_date`, `waiting_on`, `is_waiting`, `has_question_to_ask`, `is_blocked`, `blocks_others`, `last_activity`.
-- `v_priorities`: i task aperti dei progetti attivi con `priority_level`:
+- `v_priorities`: i task aperti dei progetti attivi con `priority_level` e `priority_rank` (1, 2, 3… con la stessa regola; a pari merito vale l'ordine nel piano, poi l'id). L'app ordina per `priority_rank`. Livelli:
   1. bloccano qualcuno o la scadenza effettiva è entro 7 giorni;
   2. hanno una domanda ancora da fare;
   3. il resto, per impatto.

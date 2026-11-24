@@ -39,7 +39,7 @@ docs/                architettura e specifica delle viste
 2. **Una migrazione già applicata non si modifica**: se serve un cambio, se ne crea una nuova (`supabase migration new <nome>`).
 3. **Prima di applicare una migrazione mostra cosa farà e aspetta la conferma di Simone.** Usa prima `--dry-run`. Mai `--yes`, mai `db reset --remote`.
 4. Questo repository si collega (`supabase link`) **solo** al progetto `coordinator`. Mai al progetto di Nutrirea.
-5. **Le priorità le calcola il database** (vista `v_priorities`). L'app le legge e non le ricalcola: se la regola cambia, cambia in una migrazione.
+5. **Le priorità le calcola il database** (vista `v_priorities`). L'app le legge, **ordina per `priority_rank`** e non ricalcola niente: se la regola cambia, cambia in una migrazione.
 6. **Le scritture dall'app risultano fatte "a mano"**: il trigger mette `last_changed_by = 'manual'` da solo. L'app non imposta mai `app.source`, `last_changed_by`, `created_at`, `updated_at`, `completed_at`, `closed_at` e non scrive in `activity_log`.
 7. Progetti, task e persone **non si cancellano**: un progetto finito va a `closed`, un task che non si fa più va a `cancelled`.
 8. **Task di origine GitHub** (`tasks.origin = 'github'`, oggi Nutrirea): titolo e aperto/chiuso li decide GitHub. L'app non li modifica e lo dice all'utente.

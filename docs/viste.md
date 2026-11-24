@@ -12,7 +12,7 @@ Direzione scelta il 23/11/2026: **tutto in verticale** (tavola E), con colonne p
   - "In corso" = `status = 'in_progress'`. Se è vuota, la colonna lo dice e indica il prossimo task da iniziare.
 - **Scheda di un task**: titolo, prossima azione, e etichette per "sblocca altri" (`blocks_others`), "domanda da fare" (`has_question_to_ask`, con chi: `waiting_on`), "aspetta X", "bloccato". Bordo tratteggiato o tratteggio obliquo per i bloccati.
 - **Linee orizzontali** che attraversano tutto: i checkpoint (rosso, tratteggiato), oggi (viola), e nella vista proporzionale le ore fatte (verde). Lo scarto tra fatto e piano è una fascia arancio chiaro.
-- **Colori delle feature di Nutrirea** (dal pavimento della v2): Pazienti `#f4bdd1`, Fondamenta `#c6abe3`, Accesso e sicurezza `#a5c9ed`; le altre si scelgono nello stesso tono pastello.
+- **Colori dal database**: `projects.color` (scuro, testo bianco sopra) e `features.color` (chiaro, testo `#3a1f45` sopra). Le feature di Nutrirea ce l'hanno già; le prime tre sono quelle del pavimento della v2: Pazienti `#f4bdd1`, Fondamenta `#c6abe3`, Accesso e sicurezza `#a5c9ed`.
 - **Colori di stato**: fatto `#2e7a22`, in corso `#a86f00`, da fare `#6a1f6e`, bloccato `#c0262b`. Testo `#3a1f45`, testo secondario `#6f5c78`, fondo `#fffdfb`. Carattere Plus Jakarta Sans.
 - Testi in italiano. Date brevi all'italiana ("24 nov").
 
@@ -23,7 +23,8 @@ La pagina di ogni mattina: cosa fare adesso, in tutti i progetti.
 - Fonte: `v_priorities`, già ordinata.
 - Gruppi per livello di priorità, con un'intestazione che dice il livello, la regola e quanti task contiene.
 - Livelli 1 e 2 aperti; livello 3 chiuso in un riepilogo per progetto (Nutrirea ha decine di task futuri del piano), apribile per progetto.
-- Ogni scheda ha l'etichetta del progetto (colore per progetto). A sinistra, il binario con la scadenza effettiva ("scade 24 nov") e, se c'è, il nome del checkpoint.
+- Ogni scheda ha l'etichetta del progetto, nel colore `projects.color` con testo bianco (tavolozza fissa di ripiego solo se il colore è null). A sinistra, il binario con la scadenza effettiva ("scade 24 nov"; se è passata, in rosso: "scaduto il 24 nov") e, se c'è, il nome del checkpoint.
+- L'ordine è quello di `priority_rank`: l'app ordina esplicitamente per quella colonna, perché l'ordine scritto in una vista non è garantito quando la si legge dall'API.
 - Filtri: Tutti, Lavoro, Personale (`project_scope`).
 
 ## E · Mappa di un progetto con piano (oggi solo Nutrirea)
