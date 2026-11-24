@@ -1,7 +1,8 @@
 // Checks the colour rules of the app (run by `pnpm lint`):
 // 1. component CSS (src/app/**/*.css) contains no literal colour: only tokens;
 // 2. the two dark-theme blocks of src/styles.css are identical;
-// 3. every text/background pair is at least 4.5:1, in both themes.
+// 3. every text/background pair is at least 4.5:1, in both themes;
+// 4. the inline theme script of src/index.html uses the same storage key as ThemeService.
 
 import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
@@ -106,6 +107,17 @@ for (const [name, tokens] of [
       errors.push(`${name} theme: ${text} on ${surface} is ${ratio.toFixed(2)}:1, below 4.5:1`);
     }
   }
+}
+
+// 4. Theme storage key ------------------------------------------------------
+
+const themeService = readFileSync(join(root, 'src', 'app', 'theme', 'theme.service.ts'), 'utf8');
+const storageKey = /THEME_STORAGE_KEY = '([^']+)'/.exec(themeService)?.[1];
+const indexHtml = readFileSync(join(root, 'src', 'index.html'), 'utf8');
+if (!storageKey || !indexHtml.includes(`localStorage.getItem('${storageKey}')`)) {
+  errors.push(
+    'src/index.html: the inline theme script must read THEME_STORAGE_KEY of ThemeService',
+  );
 }
 
 if (errors.length > 0) {
