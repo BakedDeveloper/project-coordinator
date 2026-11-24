@@ -1,14 +1,34 @@
 <header class="shell__header">
   <a class="shell__brand" routerLink="/">Coordinatore</a>
-  <button
-    class="shell__sign-out"
-    type="button"
-    (click)="signOut()"
-    [attr.aria-disabled]="signingOut()"
-  >
-    Esci
-  </button>
+  <div class="shell__actions">
+    <label class="shell__theme">
+      <span class="shell__theme-label">Tema</span>
+      <select class="shell__theme-select" (change)="chooseTheme($event)">
+        @for (option of themeOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === theme.choice()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
+    <button
+      class="shell__sign-out"
+      type="button"
+      (click)="signOut()"
+      [attr.aria-disabled]="signingOut()"
+    >
+      Esci
+    </button>
+  </div>
 </header>
+
+<p class="shell__notice" role="status">
+  @if (theme.saveFailed()) {
+    <span class="shell__notice-text">
+      Tema cambiato solo su questo dispositivo: non è stato salvato.
+    </span>
+  }
+</p>
 
 <main class="shell__main">
   <router-outlet />
