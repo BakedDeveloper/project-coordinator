@@ -11,15 +11,24 @@ Frontend del coordinatore dei progetti di Simone: task di tutti i progetti, di l
 
 Serve Node.js 24 (24.15 o successiva) e pnpm 12.16.1 (`corepack enable` lo prende da `package.json`).
 
-1. Installa le dipendenze:
+1. Usa Node.js 24.15.0, la versione scritta in `.nvmrc`. Con nvm (anche nvm-windows, che però non legge `.nvmrc` da solo):
+
+   ```sh
+   nvm install 24.15.0
+   nvm use 24.15.0
+   ```
+
+   Con una versione più vecchia Angular CLI si ferma all'avvio. Dopo `nvm use` apri un nuovo terminale e controlla con `node -v`.
+
+2. Installa le dipendenze:
 
    ```sh
    pnpm install
    ```
 
-2. Copia `.env.example` in `.env` e metti i valori veri: l'URL del progetto `coordinator` e la sua chiave **publishable** (`sb_publishable_...`, dal pannello di Supabase, *Project Settings → API Keys*). Mai la chiave secret: lo script di configurazione la rifiuta. `.env` è ignorato da Git.
+3. Copia `.env.example` in `.env` e metti i valori veri: l'URL del progetto `coordinator` e la sua chiave **publishable** (`sb_publishable_...`, dal pannello di Supabase, *Project Settings → API Keys*). Mai la chiave secret: lo script di configurazione la rifiuta. `.env` è ignorato da Git.
 
-3. Avvia l'app su http://localhost:4200:
+4. Avvia l'app su http://localhost:4200:
 
    ```sh
    pnpm start
