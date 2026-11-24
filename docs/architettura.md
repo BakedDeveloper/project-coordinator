@@ -24,6 +24,8 @@ URL dell'API: `https://cmyocabucpfzsvqyvspc.supabase.co` (non è un segreto).
 
 Tabelle: `projects`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
 
+Preferenze dell'app: `user_preferences`, una riga per utente, una colonna per preferenza con il suo controllo (oggi `theme`: `system`, `light`, `dark`). `updated_at` lo aggiorna un trigger; niente `activity_log`; nessuna cancellazione. Ogni nuova preferenza si aggiunge come colonna, con una migrazione per issue (epic #13).
+
 Punti da sapere per l'app:
 - `tasks.status`: `todo`, `in_progress`, `done`, `cancelled`. "In attesa" e "bloccato" **non** sono stati: si ricavano da `waiting_items` e `blocks`.
 - `tasks.impact`: `high`, `medium`, `low`; serve solo a ordinare il livello 3.
