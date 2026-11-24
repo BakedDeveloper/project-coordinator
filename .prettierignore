@@ -1,0 +1,3 @@
+# file generati: non si formattano a mano
+src/app/data/database.types.ts
+src/app/data/*.generated.ts

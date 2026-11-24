@@ -176,6 +176,7 @@ export type Database = {
       }
       features: {
         Row: {
+          color: string | null
           created_at: string
           id: string
           last_changed_by: string
@@ -185,6 +186,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
           last_changed_by?: string
@@ -194,6 +196,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
           last_changed_by?: string
@@ -315,6 +318,7 @@ export type Database = {
         Row: {
           client: string | null
           closed_at: string | null
+          color: string | null
           created_at: string
           github_repo: string | null
           id: string
@@ -329,6 +333,7 @@ export type Database = {
         Insert: {
           client?: string | null
           closed_at?: string | null
+          color?: string | null
           created_at?: string
           github_repo?: string | null
           id?: string
@@ -343,6 +348,7 @@ export type Database = {
         Update: {
           client?: string | null
           closed_at?: string | null
+          color?: string | null
           created_at?: string
           github_repo?: string | null
           id?: string
@@ -608,6 +614,7 @@ export type Database = {
           origin: string | null
           position: number | null
           priority_level: number | null
+          priority_rank: number | null
           project_id: string | null
           project_name: string | null
           project_scope: string | null
