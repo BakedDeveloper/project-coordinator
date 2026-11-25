@@ -12,9 +12,10 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const errors = [];
 
 // 1. No literal colours in component CSS ------------------------------------
+// Colour names count only as whole words: `white-space` is not a colour.
 
 const LITERAL_COLOR =
-  /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(|\b(?:white|black|red|green|blue|gray|grey|purple|orange|yellow|pink)\b/i;
+  /#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(|(?<![\w-])(?:white|black|red|green|blue|gray|grey|purple|orange|yellow|pink)(?![\w-])/i;
 
 function cssFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
