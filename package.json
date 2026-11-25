@@ -7,7 +7,7 @@
     "start": "node scripts/write-config.mjs && ng serve",
     "build": "node scripts/write-config.mjs && ng build",
     "watch": "node scripts/write-config.mjs && ng build --watch --configuration development",
-    "test": "node scripts/write-config.mjs --test && ng test",
+    "test": "node scripts/write-config.mjs --if-missing && ng test",
     "gen:types": "supabase gen types typescript --project-id cmyocabucpfzsvqyvspc --schema public > src/app/data/database.types.ts",
     "lint": "ng lint && node scripts/check-styles.mjs"
   },
