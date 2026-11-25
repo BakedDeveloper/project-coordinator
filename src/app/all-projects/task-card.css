@@ -1,3 +1,9 @@
+/* The card adapts to its own width (board columns are narrower than the lists). */
+:host {
+  display: block;
+  container-type: inline-size;
+}
+
 .card {
   display: grid;
   grid-template-columns: 5.5rem minmax(0, 1fr);
@@ -26,6 +32,31 @@
 
 .card__due--overdue {
   color: var(--color-status-blocked);
+}
+
+.card__done {
+  color: var(--color-status-done);
+  font-weight: 600;
+}
+
+/* Narrow card (a board column on a mid-size screen): the rail becomes a row on top. */
+@container (max-width: 17.5rem) {
+  .card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card__rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-right: none;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  .card__rail:empty {
+    display: none;
+  }
 }
 
 /* The rail is narrow: hyphenate long words (the page is lang="it") instead of
