@@ -84,6 +84,8 @@ const TEXT_ON_SURFACES = [
   '--color-status-in-progress-text',
   '--color-status-todo',
   '--color-status-blocked',
+  '--color-line-today',
+  '--color-line-checkpoint',
 ];
 const SURFACES = ['--color-background', '--color-surface', '--color-surface-muted'];
 const PAIRS = [

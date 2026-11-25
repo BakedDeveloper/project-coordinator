@@ -21,6 +21,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./all-projects/all-projects.page').then((m) => m.AllProjectsPage),
       },
+      {
+        path: 'progetti/:id',
+        // The page replaces it with the project name once loaded.
+        title: 'Progetto · Coordinatore',
+        loadComponent: () => import('./project/project.page').then((m) => m.ProjectPage),
+      },
     ],
   },
   // Unknown pages go through the guard of the home page: login first if needed.
