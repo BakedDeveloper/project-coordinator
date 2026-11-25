@@ -1,8 +1,10 @@
 import { boardTask } from '../../testing/board-task.fixture';
+import { doneProjectTask, projectTask } from '../../testing/project-task.fixture';
 import {
   buildColumns,
   columnOf,
   doneSince,
+  projectBoardTasks,
   projectOptions,
   type BoardFilter,
   type ColumnKey,
@@ -97,5 +99,35 @@ describe('board model', () => {
       { id: 'p2', name: 'Reply - Fleet' },
     ]);
     expect(projectOptions(tasks, 'work')).toEqual([{ id: 'p2', name: 'Reply - Fleet' }]);
+  });
+
+  it('turns a project into board tasks: by rank, then by creation, with the done ones', () => {
+    const project = {
+      id: 'p1',
+      name: 'Casa',
+      scope: 'personal' as const,
+      status: 'paused' as const,
+      color: null,
+      weeklyHours: null,
+    };
+    const tasks = projectBoardTasks({
+      project,
+      checkpoints: [],
+      tasks: [
+        projectTask({ id: 'late', priorityRank: null, createdAt: '2026-11-20T09:00:00Z' }),
+        projectTask({ id: 'early', priorityRank: null, createdAt: '2026-11-02T09:00:00Z' }),
+        projectTask({ id: 'ranked', priorityRank: 7 }),
+      ],
+      doneTasks: [doneProjectTask({ id: 'done', completedAt: '2026-11-24T16:00:00Z' })],
+    });
+
+    expect(tasks.map((t) => t.id)).toEqual(['ranked', 'early', 'late', 'done']);
+    expect(tasks.every((t) => t.projectScope === 'personal')).toBe(true);
+    expect(tasks[3]).toMatchObject({
+      status: 'done',
+      priorityRank: null,
+      completedAt: '2026-11-24T16:00:00Z',
+    });
+    expect(tasks[0].completedAt).toBeNull();
   });
 });

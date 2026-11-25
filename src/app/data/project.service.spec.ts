@@ -12,19 +12,22 @@ const ID = '0b7c1f3e-2a4d-4c6e-8f10-1a2b3c4d5e6f';
 
 /**
  * A fake query builder: every filter returns the builder, awaiting it gives the result of
- * its table. It records the calls, to check the filters.
+ * its table. It records the calls, to check the filters. A second query on the same table
+ * gets the result under `table#2` when there is one (v_tasks: open, then done tasks).
  */
 function setup(results: Record<string, Result | 'reject'>) {
   const calls: Record<string, [string, unknown[]][]> = {};
+  const count: Record<string, number> = {};
   const from = vi.fn((table: string) => {
-    calls[table] = [];
-    const result = results[table];
+    count[table] = (count[table] ?? 0) + 1;
+    calls[table] ??= [];
+    const result = results[`${table}#${count[table]}`] ?? results[table];
     const settle = () =>
       result === 'reject' ? Promise.reject(new Error('network')) : Promise.resolve(result);
     const builder: Record<string, unknown> = {
       then: (ok: (r: unknown) => unknown, ko: (e: unknown) => unknown) => settle().then(ok, ko),
     };
-    for (const method of ['select', 'eq', 'in', 'is', 'order']) {
+    for (const method of ['select', 'eq', 'in', 'is', 'gte', 'order']) {
       builder[method] = (...args: unknown[]) => {
         calls[table].push([method, args]);
         return builder;
@@ -64,6 +67,7 @@ const taskRow = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const ok = (data: unknown): Result => ({ data, error: null });
+const SINCE = new Date('2026-11-12T00:00:00Z');
 
 describe('ProjectService', () => {
   it('reads the project, its open tasks with their rank and its open checkpoints', async () => {
@@ -72,14 +76,21 @@ describe('ProjectService', () => {
       v_tasks: ok([taskRow()]),
       checkpoints: ok([{ id: 'c1', name: 'Trasloco', due_date: '2026-12-01' }]),
       v_priorities: ok([{ id: 't1', priority_rank: 4 }]),
+      'v_tasks#2': ok([
+        taskRow({ id: 'd1', status: 'done', completed_at: '2026-11-24T16:00:00Z' }),
+        taskRow({ id: 'd2', status: 'done', completed_at: null }),
+      ]),
     });
 
-    const detail = await service.load(ID);
+    const detail = await service.load(ID, SINCE);
 
     expect(calls['v_tasks']).toContainEqual(['eq', ['project_id', ID]]);
     expect(calls['v_tasks']).toContainEqual(['in', ['status', ['todo', 'in_progress']]]);
     expect(calls['checkpoints']).toContainEqual(['is', ['completed_at', null]]);
     expect(calls['v_priorities']).toContainEqual(['eq', ['project_id', ID]]);
+    expect(calls['v_tasks']).toContainEqual(['eq', ['status', 'done']]);
+    expect(calls['v_tasks']).toContainEqual(['gte', ['completed_at', '2026-11-12T00:00:00.000Z']]);
+    expect(calls['v_tasks']).toContainEqual(['order', ['completed_at', { ascending: false }]]);
     expect(detail).toEqual({
       project: {
         id: ID,
@@ -109,6 +120,26 @@ describe('ProjectService', () => {
           priorityRank: 4,
         },
       ],
+      doneTasks: [
+        {
+          id: 'd1',
+          title: 'Chiamare l’idraulico',
+          nextAction: 'Cercare il numero',
+          projectId: ID,
+          projectName: 'Casa',
+          projectColor: '#2f5f93',
+          status: 'done',
+          effectiveDueDate: '2026-11-30',
+          checkpointName: 'Trasloco',
+          blocksOthers: false,
+          isBlocked: true,
+          isWaiting: false,
+          hasQuestionToAsk: false,
+          waitingOn: null,
+          createdAt: '2026-11-20T10:00:00Z',
+          completedAt: '2026-11-24T16:00:00Z',
+        },
+      ],
       checkpoints: [{ id: 'c1', name: 'Trasloco', dueDate: '2026-12-01' }],
     });
   });
@@ -121,7 +152,7 @@ describe('ProjectService', () => {
       v_priorities: ok([]),
     });
 
-    const detail = await service.load(ID);
+    const detail = await service.load(ID, SINCE);
 
     expect(detail?.tasks[0].priorityRank).toBeNull();
   });
@@ -134,13 +165,13 @@ describe('ProjectService', () => {
       v_priorities: ok([]),
     });
 
-    expect(await service.load(ID)).toBeNull();
+    expect(await service.load(ID, SINCE)).toBeNull();
   });
 
   it('returns null without asking the database when the id is not a uuid', async () => {
     const { service, from } = setup({});
 
-    expect(await service.load('non-esiste')).toBeNull();
+    expect(await service.load('non-esiste', SINCE)).toBeNull();
     expect(from).not.toHaveBeenCalled();
   });
 
@@ -152,7 +183,7 @@ describe('ProjectService', () => {
       v_priorities: ok([]),
     });
 
-    const error = await service.load(ID).catch((e: unknown) => e);
+    const error = await service.load(ID, SINCE).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ProjectUnavailableError);
     expect((error as Error).message).not.toContain('secret');
   });
@@ -165,7 +196,7 @@ describe('ProjectService', () => {
       v_priorities: ok([]),
     });
 
-    await expect(service.load(ID)).rejects.toBeInstanceOf(ProjectUnavailableError);
+    await expect(service.load(ID, SINCE)).rejects.toBeInstanceOf(ProjectUnavailableError);
   });
 
   describe('list', () => {
