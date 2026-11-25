@@ -32,8 +32,8 @@ describe('TaskCard', () => {
 
     expect(element.querySelector('h3')?.textContent).toBe('Preparare la demo');
     expect(element.querySelector('.card__next')?.textContent).toContain('Scrivere lo script');
-    const tag = element.querySelector<HTMLElement>('.card__project')!;
-    expect(tag.textContent).toBe('Reply - Fleet');
+    expect(element.querySelector('.card__project .badge__name')?.textContent).toBe('Reply - Fleet');
+    const tag = element.querySelector<HTMLElement>('.card__project .badge__tag')!;
     expect(tag.style.backgroundColor).toBe('rgb(47, 95, 147)');
   });
 
@@ -53,9 +53,9 @@ describe('TaskCard', () => {
   it('uses the fallback palette when the project has no colour', async () => {
     const element = await render({ projectColor: null });
 
-    expect(element.querySelector<HTMLElement>('.card__project')!.style.backgroundColor).not.toBe(
-      '',
-    );
+    expect(
+      element.querySelector<HTMLElement>('.card__project .badge__tag')!.style.backgroundColor,
+    ).not.toBe('');
   });
 
   it('hides the next action when there is none', async () => {

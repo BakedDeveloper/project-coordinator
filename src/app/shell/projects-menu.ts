@@ -2,6 +2,7 @@ import { Component, ElementRef, computed, inject, signal, viewChild } from '@ang
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { projectColor } from '../all-projects/all-projects.model';
+import { ProjectBadge } from '../shared/project-badge';
 import { ProjectService, type ProjectLink } from '../data/project.service';
 import { groupProjects } from './projects-menu.model';
 
@@ -10,7 +11,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 /** "Progetti" button in the header: every project, active, paused and closed. */
 @Component({
   selector: 'app-projects-menu',
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, ProjectBadge],
   templateUrl: './projects-menu.html',
   styleUrl: './projects-menu.css',
   host: {

@@ -22,7 +22,7 @@ URL dell'API: `https://cmyocabucpfzsvqyvspc.supabase.co` (non è un segreto).
 
 ## Lo schema (migrazioni in `supabase/migrations/`)
 
-Tabelle: `projects`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
+Tabelle: `projects`, `clients`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
 
 Preferenze dell'app: `user_preferences`, una riga per utente, una colonna per preferenza con il suo controllo (oggi `theme`: `system`, `light`, `dark`). `updated_at` lo aggiorna un trigger; niente `activity_log`; nessuna cancellazione. Ogni nuova preferenza si aggiunge come colonna, con una migrazione per issue (epic #13).
 
@@ -34,6 +34,8 @@ Punti da sapere per l'app:
 - `tasks.description`: dettagli anche tecnici, mai dati sensibili.
 - `projects.status`: `active`, `paused`, `closed`; i progetti chiusi restano visibili (`closed_at`).
 - `projects.color` e `features.color`: colori `#rrggbb` (progetto scuro con testo bianco, feature chiara con testo scuro), impostati dalla migrazione `20261124104220_colors_and_priority_rank.sql`.
+- Badge dei progetti (migrazione `20261125171545_project_badges.sql`): `projects.short_name` (nome breve, es. Fleet), `projects.icon` (nome di un'icona Lucide; l'app mostra solo quelle del suo catalogo, `src/app/shared/project-icons.ts`), `projects.logo_path` (logo proprio). `clients` ha nome e `logo_path`; si collega a `projects.client` **per nome**, senza vincolo, così la skill può scrivere clienti nuovi. Il logo del progetto vince su quello del cliente.
+- Loghi: bucket **privato** `logos` di Supabase Storage (solo immagini, massimo 512 KB), lettura e scrittura solo per Simone. L'app li mostra con URL firmati di un'ora, mai con link pubblici. Il connettore Supabase degli account Claude non carica file: i loghi si caricano dal pannello di Supabase (o dall'app, più avanti).
 
 Viste (con `security_invoker`, rispettano la RLS di chi legge):
 - `v_tasks`: ogni task con `project_name`, `project_scope`, `project_status`, `checkpoint_name`, `checkpoint_due_date`, `effective_due_date`, `waiting_on`, `is_waiting`, `has_question_to_ask`, `is_blocked`, `blocks_others`, `last_activity`.

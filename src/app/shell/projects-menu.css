@@ -76,21 +76,6 @@
   color: var(--color-text-secondary);
 }
 
-.menu__link--closed .menu__tag {
-  opacity: 0.5;
-}
-
-.menu__tag {
-  flex: none;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 999px;
-}
-
-.menu__name {
-  overflow-wrap: anywhere;
-}
-
 .menu__message {
   margin: 0.5rem;
   color: var(--color-text-secondary);

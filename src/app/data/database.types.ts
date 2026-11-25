@@ -174,6 +174,33 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          created_at: string
+          id: string
+          last_changed_by: string
+          logo_path: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_changed_by?: string
+          logo_path?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_changed_by?: string
+          logo_path?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       features: {
         Row: {
           color: string | null
@@ -321,10 +348,13 @@ export type Database = {
           color: string | null
           created_at: string
           github_repo: string | null
+          icon: string | null
           id: string
           last_changed_by: string
+          logo_path: string | null
           name: string
           scope: string
+          short_name: string | null
           start_date: string | null
           status: string
           updated_at: string
@@ -336,10 +366,13 @@ export type Database = {
           color?: string | null
           created_at?: string
           github_repo?: string | null
+          icon?: string | null
           id?: string
           last_changed_by?: string
+          logo_path?: string | null
           name: string
           scope: string
+          short_name?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -351,10 +384,13 @@ export type Database = {
           color?: string | null
           created_at?: string
           github_repo?: string | null
+          icon?: string | null
           id?: string
           last_changed_by?: string
+          logo_path?: string | null
           name?: string
           scope?: string
+          short_name?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string

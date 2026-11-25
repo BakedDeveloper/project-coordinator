@@ -61,8 +61,8 @@ describe('ProjectPage', () => {
     const { element, title, projects } = await setup(async () => detail({ tasks: [task()] }));
 
     expect(projects.load).toHaveBeenCalledWith('p1', new Date(2026, 10, 12, 0, 0));
-    const tag = element.querySelector<HTMLElement>('h1 .project-tag')!;
-    expect(tag.textContent).toBe('Casa');
+    expect(text(element.querySelector('h1 .badge__name'))).toBe('Casa');
+    const tag = element.querySelector<HTMLElement>('h1 .badge__tag')!;
     expect(tag.style.backgroundColor).toBe('rgb(47, 95, 147)');
     expect(text(element.querySelector('.page-header__meta'))).toBe('Personale · Attivo');
     expect(title.getTitle()).toBe('Casa · Coordinatore');
@@ -248,7 +248,7 @@ describe('ProjectPage', () => {
     await fixture.whenStable();
 
     expect(projects.load).toHaveBeenLastCalledWith('p2', expect.any(Date));
-    expect(text(element.querySelector('h1'))).toBe('Lavoro');
+    expect(text(element.querySelector('h1 .badge__name'))).toBe('Lavoro');
   });
 
   describe('tabs', () => {

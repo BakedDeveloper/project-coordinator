@@ -1,6 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { ProjectBadge } from '../shared/project-badge';
+
 import {
   dueLabel,
   formatShortDate,
@@ -12,7 +14,7 @@ import {
 
 @Component({
   selector: 'app-task-card',
-  imports: [RouterLink],
+  imports: [RouterLink, ProjectBadge],
   templateUrl: './task-card.html',
   styleUrl: './task-card.css',
 })
