@@ -47,6 +47,14 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "test": {
+              "fileReplacements": [
+                {
+                  "replace": "src/app/data/supabase-config.generated.ts",
+                  "with": "src/testing/supabase-config.fake.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -64,7 +72,10 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "project-coordinator:build:development,test"
+          }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",

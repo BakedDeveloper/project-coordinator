@@ -40,7 +40,7 @@ Serve Node.js 24 (24.15 o successiva) e pnpm 12.16.1 (`corepack enable` lo prend
 |---|---|
 | `pnpm start` | genera la configurazione e avvia il server di sviluppo |
 | `pnpm build` | genera la configurazione e compila in `dist/` |
-| `pnpm test` | test unitari (Vitest), sempre con valori di configurazione finti |
+| `pnpm test` | test unitari (Vitest), sempre con i valori finti di `src/testing/supabase-config.fake.ts`; non tocca la configurazione del server di sviluppo |
 | `pnpm lint` | ESLint, comprese le regole di accessibilità dei template |
 | `pnpm gen:config` | rigenera solo `src/app/data/supabase-config.generated.ts` |
 | `pnpm gen:types` | rigenera `src/app/data/database.types.ts` dallo schema del progetto |

@@ -1,8 +1,14 @@
 // Generates src/app/data/supabase-config.generated.ts from SUPABASE_URL and
 // SUPABASE_PUBLISHABLE_KEY (process environment first, then the local .env file).
 //
-//   node scripts/write-config.mjs          values are required (build, start)
-//   node scripts/write-config.mjs --test   always fake values, so unit tests never reach the real project
+//   node scripts/write-config.mjs                 values are required (build, start)
+//   node scripts/write-config.mjs --if-missing    tests: only writes an empty placeholder
+//                                                 when the file does not exist yet
+//
+// Unit tests never use this file's values: angular.json swaps in the fake values of
+// src/testing/supabase-config.fake.ts, so they never reach the real project. The file
+// must still exist for the swap to work, hence the placeholder on a fresh clone; an
+// existing file is left alone, so running the tests never breaks a running dev server.
 //
 // The generated file is git-ignored. It never contains the secret key: a key that
 // is not a publishable one is rejected.
@@ -13,15 +19,30 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const envFile = `${root}.env`;
 const outFile = `${root}src/app/data/supabase-config.generated.ts`;
-const testMode = process.argv.includes('--test');
+
+if (process.argv.includes('--if-missing')) {
+  if (!existsSync(outFile)) {
+    writeFileSync(
+      outFile,
+      `// Placeholder written by scripts/write-config.mjs --if-missing. Run pnpm gen:config for real values.
+export const supabaseConfig = {
+  url: '',
+  publishableKey: '',
+} as const;
+`,
+    );
+    console.log('Supabase configuration placeholder written.');
+  }
+  process.exit(0);
+}
 
 // Netlify and the shell win over .env: loadEnvFile does not overwrite existing variables.
-if (!testMode && existsSync(envFile)) {
+if (existsSync(envFile)) {
   process.loadEnvFile(envFile);
 }
 
-const url = testMode ? 'https://test-project.supabase.co' : (process.env.SUPABASE_URL?.trim() ?? '');
-const key = testMode ? 'sb_publishable_test' : (process.env.SUPABASE_PUBLISHABLE_KEY?.trim() ?? '');
+const url = process.env.SUPABASE_URL?.trim() ?? '';
+const key = process.env.SUPABASE_PUBLISHABLE_KEY?.trim() ?? '';
 
 const errors = [];
 if (!url) {
@@ -33,7 +54,9 @@ if (!key) {
   errors.push('SUPABASE_PUBLISHABLE_KEY is missing.');
 } else if (!key.startsWith('sb_publishable_')) {
   // Never print the value: it could be the secret key pasted by mistake.
-  errors.push('SUPABASE_PUBLISHABLE_KEY must be a publishable key (sb_publishable_...). Never use the secret key.');
+  errors.push(
+    'SUPABASE_PUBLISHABLE_KEY must be a publishable key (sb_publishable_...). Never use the secret key.',
+  );
 }
 
 if (errors.length > 0) {
@@ -51,4 +74,4 @@ export const supabaseConfig = {
 `;
 
 writeFileSync(outFile, content);
-console.log(`Supabase configuration written${testMode ? ' (fake test values)' : ''}.`);
+console.log('Supabase configuration written.');
