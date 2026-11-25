@@ -1,11 +1,13 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { formatShortDate, projectColor, toIsoDate } from '../all-projects/all-projects.model';
 import { TaskCard } from '../all-projects/task-card';
+import { BoardColumns } from '../board/board-columns';
+import { buildColumns, doneSince, projectBoardTasks } from '../board/board.model';
 import { ProjectService, type ProjectDetail } from '../data/project.service';
 import { CLOCK } from '../shared/clock';
 import {
@@ -20,30 +22,44 @@ import {
 } from './project.model';
 
 type LoadState = 'loading' | 'ready' | 'not-found' | 'error';
+/** The tab of the project page, from the `vista` query parameter. */
+export type ProjectTab = 'board' | 'cronologia';
 
 const APP_NAME = 'Coordinatore';
 
-/** View G of docs/viste.md: the open tasks of one project, by date. Read-only. */
+/**
+ * One project (docs/viste.md): its board, and the Cronologia tab with the open tasks by date
+ * (former view G). Read-only.
+ */
 @Component({
   selector: 'app-project-page',
-  imports: [TaskCard],
+  imports: [TaskCard, BoardColumns, RouterLink],
   templateUrl: './project.page.html',
   styleUrl: './project.page.css',
+  host: { '[class.narrow]': "tab() === 'cronologia'" },
 })
 export class ProjectPage {
   private readonly projects = inject(ProjectService);
   private readonly clock = inject(CLOCK);
   private readonly title = inject(Title);
 
+  private readonly route = inject(ActivatedRoute);
   private readonly id = toSignal(
-    inject(ActivatedRoute).paramMap.pipe(map((params) => params.get('id') ?? '')),
+    this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
     { initialValue: '' },
+  );
+  protected readonly tab = toSignal(
+    this.route.queryParamMap.pipe(
+      map((params): ProjectTab => (params.get('vista') === 'cronologia' ? 'cronologia' : 'board')),
+    ),
+    { initialValue: 'board' as ProjectTab },
   );
 
   protected readonly columns = COLUMNS;
   protected readonly state = signal<LoadState>('loading');
   protected readonly today = signal(toIsoDate(this.clock()));
   protected readonly detail = signal<ProjectDetail | null>(null);
+  private readonly since = signal(doneSince(this.clock()));
 
   protected readonly project = computed(() => this.detail()?.project ?? null);
   protected readonly color = computed(() => {
@@ -72,6 +88,13 @@ export class ProjectPage {
   protected readonly next = computed(() => nextToStart(this.tasks()));
   protected readonly todayLabel = computed(() => formatShortDate(this.today()));
 
+  protected readonly boardColumns = computed(() => {
+    const detail = this.detail();
+    return detail
+      ? buildColumns(projectBoardTasks(detail), { scope: 'all', projectId: null }, this.since())
+      : [];
+  });
+
   /** Counts the loads, so a slow answer for a previous project is dropped. */
   private loadCount = 0;
 
@@ -93,12 +116,14 @@ export class ProjectPage {
     const current = ++this.loadCount;
     this.state.set('loading');
     this.detail.set(null);
+    const now = this.clock();
     try {
-      const detail = await this.projects.load(id);
+      const detail = await this.projects.load(id, doneSince(now));
       if (current !== this.loadCount) {
         return;
       }
-      this.today.set(toIsoDate(this.clock()));
+      this.today.set(toIsoDate(now));
+      this.since.set(doneSince(now));
       if (detail === null) {
         this.title.setTitle(`Progetto non trovato · ${APP_NAME}`);
         this.state.set('not-found');

@@ -55,9 +55,18 @@ export interface Checkpoint {
   dueDate: string;
 }
 
+/** One task of the project done recently, for the Fatto column of the project board. */
+export interface DoneProjectTask extends Omit<ProjectTask, 'status' | 'priorityRank'> {
+  status: 'done';
+  /** ISO timestamp. */
+  completedAt: string;
+}
+
 export interface ProjectDetail {
   project: Project;
   tasks: ProjectTask[];
+  /** Tasks done since the date given to `load`, the most recent first. */
+  doneTasks: DoneProjectTask[];
   /** Open checkpoints only (`completed_at is null`), by date. */
   checkpoints: Checkpoint[];
 }
@@ -74,6 +83,8 @@ export class ProjectUnavailableError extends Error {
 const PROJECT_COLUMNS = 'id, name, scope, status, color, weekly_hours';
 const TASK_COLUMNS =
   'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, created_at';
+const DONE_TASK_COLUMNS =
+  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, created_at, completed_at';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -102,14 +113,14 @@ export class ProjectService {
     );
   }
 
-  /** The project, or null when no project has this id. */
-  async load(id: string): Promise<ProjectDetail | null> {
+  /** The project, or null when no project has this id. Done tasks are read from `doneSince`. */
+  async load(id: string, doneSince: Date): Promise<ProjectDetail | null> {
     // Not a uuid: Postgres would reject the filter, and no project can have it.
     if (!UUID.test(id)) {
       return null;
     }
 
-    const [project, tasks, checkpoints, priorities] = await Promise.all([
+    const [project, tasks, checkpoints, priorities, done] = await Promise.all([
       this.supabase.from('projects').select(PROJECT_COLUMNS).eq('id', id).maybeSingle(),
       this.supabase
         .from('v_tasks')
@@ -123,11 +134,18 @@ export class ProjectService {
         .is('completed_at', null)
         .order('due_date'),
       this.supabase.from('v_priorities').select('id, priority_rank').eq('project_id', id),
+      this.supabase
+        .from('v_tasks')
+        .select(DONE_TASK_COLUMNS)
+        .eq('project_id', id)
+        .eq('status', 'done')
+        .gte('completed_at', doneSince.toISOString())
+        .order('completed_at', { ascending: false }),
     ]).catch(() => {
       throw new ProjectUnavailableError();
     });
 
-    if (project.error || tasks.error || checkpoints.error || priorities.error) {
+    if (project.error || tasks.error || checkpoints.error || priorities.error || done.error) {
       throw new ProjectUnavailableError();
     }
     if (!project.data || !isScope(project.data.scope) || !isStatus(project.data.status)) {
@@ -169,9 +187,35 @@ export class ProjectService {
       });
     }
 
+    const doneTasks: DoneProjectTask[] = [];
+    for (const row of done.data) {
+      if (row.id === null || !row.completed_at) {
+        continue;
+      }
+      doneTasks.push({
+        id: row.id,
+        title: row.title ?? '',
+        nextAction: row.next_action,
+        projectId: p.id,
+        projectName: p.name,
+        projectColor: p.color,
+        status: 'done',
+        effectiveDueDate: row.effective_due_date,
+        checkpointName: row.checkpoint_name,
+        blocksOthers: row.blocks_others ?? false,
+        isBlocked: row.is_blocked ?? false,
+        isWaiting: row.is_waiting ?? false,
+        hasQuestionToAsk: row.has_question_to_ask ?? false,
+        waitingOn: row.waiting_on,
+        createdAt: row.created_at ?? '',
+        completedAt: row.completed_at,
+      });
+    }
+
     return {
       project: p,
       tasks: projectTasks,
+      doneTasks,
       checkpoints: checkpoints.data.map((c) => ({ id: c.id, name: c.name, dueDate: c.due_date })),
     };
   }

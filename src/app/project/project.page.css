@@ -1,8 +1,38 @@
-/* List pages keep a readable width; the shell is wide for the boards. */
+/* The board tab uses the full width; Cronologia keeps a readable one. */
 :host {
   display: block;
-  max-width: 60rem;
   margin: 0 auto;
+}
+
+:host(.narrow) {
+  max-width: 60rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-bottom: 3px solid transparent;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab[aria-current='page'] {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-text);
 }
 
 .page-header {

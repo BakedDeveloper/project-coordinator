@@ -28,104 +28,124 @@
           Progetto in pausa (o chiuso): i task non hanno priorità, sono in ordine di creazione.
         </p>
       }
-      @if (hasPlan()) {
-        <p class="notice">
-          Questo progetto ha un piano: la mappa con le ore (vista E) arriverà più avanti. Per ora i
-          task sono in ordine di data.
-        </p>
-      }
+      <nav class="tabs" aria-label="Viste del progetto">
+        <a
+          class="tab"
+          [routerLink]="['/progetti', p.id]"
+          [attr.aria-current]="tab() === 'board' ? 'page' : null"
+          >Board</a
+        >
+        <a
+          class="tab"
+          [routerLink]="['/progetti', p.id]"
+          [queryParams]="{ vista: 'cronologia' }"
+          [attr.aria-current]="tab() === 'cronologia' ? 'page' : null"
+          >Cronologia</a
+        >
+      </nav>
 
-      @if (detail()!.tasks.length === 0) {
-        <p class="message">Nessun task aperto.</p>
+      @if (tab() === 'board') {
+        <app-board-columns [columns]="boardColumns()" [today]="today()" [showProject]="false" />
       } @else {
-        <div class="board">
-          <div class="board__heads">
-            @for (column of columns; track column.key) {
-              <div class="board__head" [class]="'col--' + column.key">
-                <h2 class="board__title">{{ column.label }}</h2>
-                @if (column.key === 'in_progress' && nothingInProgress()) {
-                  <p class="board__hint">
-                    Niente in corso.
-                    @if (next(); as n) {
-                      Il prossimo da iniziare: <strong>{{ n.title }}</strong>
-                    }
-                  </p>
-                }
-              </div>
-            }
-          </div>
+        @if (hasPlan()) {
+          <p class="notice">
+            Questo progetto ha un piano: la mappa con le ore (vista E) arriverà più avanti. Per ora
+            i task sono in ordine di data.
+          </p>
+        }
 
-          <!-- On a phone the columns stack: the hint must stay visible there too. -->
-          @if (nothingInProgress()) {
-            <p class="board__hint board__hint--narrow">
-              Niente in corso.
-              @if (next(); as n) {
-                Il prossimo da iniziare: <strong>{{ n.title }}</strong>
-              }
-            </p>
-          }
-
-          <ol class="timeline">
-            @for (item of timeline(); track item.kind + item.date + $index) {
-              @switch (item.kind) {
-                @case ('today') {
-                  <li class="line line--today">
-                    <span class="line__label">Oggi · {{ todayLabel() }}</span>
-                  </li>
-                }
-                @case ('checkpoint') {
-                  @if (item.kind === 'checkpoint') {
-                    <li class="line line--checkpoint">
-                      <span class="line__label"
-                        >Checkpoint · {{ item.name }} · {{ shortDate(item.date) }}</span
-                      >
-                    </li>
-                  }
-                }
-                @case ('row') {
-                  @if (item.kind === 'row') {
-                    <li class="row">
-                      @for (column of columns; track column.key) {
-                        <ul class="cell" [class]="'col--' + column.key">
-                          @for (task of item.cells[column.key]; track task.id) {
-                            <li class="cell__item">
-                              <p class="cell__status">{{ column.label }}</p>
-                              <app-task-card
-                                [task]="task"
-                                [today]="today()"
-                                [showProject]="false"
-                              />
-                            </li>
-                          }
-                        </ul>
+        @if (detail()!.tasks.length === 0) {
+          <p class="message">Nessun task aperto.</p>
+        } @else {
+          <div class="board">
+            <div class="board__heads">
+              @for (column of columns; track column.key) {
+                <div class="board__head" [class]="'col--' + column.key">
+                  <h2 class="board__title">{{ column.label }}</h2>
+                  @if (column.key === 'in_progress' && nothingInProgress()) {
+                    <p class="board__hint">
+                      Niente in corso.
+                      @if (next(); as n) {
+                        Il prossimo da iniziare: <strong>{{ n.title }}</strong>
                       }
+                    </p>
+                  }
+                </div>
+              }
+            </div>
+
+            <!-- On a phone the columns stack: the hint must stay visible there too. -->
+            @if (nothingInProgress()) {
+              <p class="board__hint board__hint--narrow">
+                Niente in corso.
+                @if (next(); as n) {
+                  Il prossimo da iniziare: <strong>{{ n.title }}</strong>
+                }
+              </p>
+            }
+
+            <ol class="timeline">
+              @for (item of timeline(); track item.kind + item.date + $index) {
+                @switch (item.kind) {
+                  @case ('today') {
+                    <li class="line line--today">
+                      <span class="line__label">Oggi · {{ todayLabel() }}</span>
                     </li>
                   }
-                }
-              }
-            }
-          </ol>
-
-          @if (hasUndated()) {
-            <section class="undated" aria-labelledby="undated-title">
-              <h2 class="undated__title" id="undated-title">
-                Senza data · non collegati a nessun checkpoint
-              </h2>
-              <div class="row">
-                @for (column of columns; track column.key) {
-                  <ul class="cell" [class]="'col--' + column.key">
-                    @for (task of undated()[column.key]; track task.id) {
-                      <li class="cell__item">
-                        <p class="cell__status">{{ column.label }}</p>
-                        <app-task-card [task]="task" [today]="today()" [showProject]="false" />
+                  @case ('checkpoint') {
+                    @if (item.kind === 'checkpoint') {
+                      <li class="line line--checkpoint">
+                        <span class="line__label"
+                          >Checkpoint · {{ item.name }} · {{ shortDate(item.date) }}</span
+                        >
                       </li>
                     }
-                  </ul>
+                  }
+                  @case ('row') {
+                    @if (item.kind === 'row') {
+                      <li class="row">
+                        @for (column of columns; track column.key) {
+                          <ul class="cell" [class]="'col--' + column.key">
+                            @for (task of item.cells[column.key]; track task.id) {
+                              <li class="cell__item">
+                                <p class="cell__status">{{ column.label }}</p>
+                                <app-task-card
+                                  [task]="task"
+                                  [today]="today()"
+                                  [showProject]="false"
+                                />
+                              </li>
+                            }
+                          </ul>
+                        }
+                      </li>
+                    }
+                  }
                 }
-              </div>
-            </section>
-          }
-        </div>
+              }
+            </ol>
+
+            @if (hasUndated()) {
+              <section class="undated" aria-labelledby="undated-title">
+                <h2 class="undated__title" id="undated-title">
+                  Senza data · non collegati a nessun checkpoint
+                </h2>
+                <div class="row">
+                  @for (column of columns; track column.key) {
+                    <ul class="cell" [class]="'col--' + column.key">
+                      @for (task of undated()[column.key]; track task.id) {
+                        <li class="cell__item">
+                          <p class="cell__status">{{ column.label }}</p>
+                          <app-task-card [task]="task" [today]="today()" [showProject]="false" />
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </section>
+            }
+          </div>
+        }
       }
     }
   }

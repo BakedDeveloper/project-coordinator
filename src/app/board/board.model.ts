@@ -1,4 +1,5 @@
 import type { BoardTask } from '../data/board.service';
+import type { ProjectDetail } from '../data/project.service';
 import type { ScopeFilter } from '../all-projects/all-projects.model';
 
 export type ColumnKey = 'todo' | 'in_progress' | 'blocked' | 'done';
@@ -78,6 +79,27 @@ export function projectOptions(tasks: readonly BoardTask[], scope: ScopeFilter):
   return [...byId]
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name, 'it'));
+}
+
+/**
+ * The tasks of one project as board tasks. A paused or closed project has no priorities:
+ * its open tasks come in order of creation (the board keeps that order for equal ranks).
+ */
+export function projectBoardTasks(detail: ProjectDetail): BoardTask[] {
+  const { project } = detail;
+  const open = [...detail.tasks]
+    .sort(
+      (a, b) =>
+        (a.priorityRank ?? Number.MAX_SAFE_INTEGER) - (b.priorityRank ?? Number.MAX_SAFE_INTEGER) ||
+        a.createdAt.localeCompare(b.createdAt),
+    )
+    .map((task) => ({ ...task, projectScope: project.scope, completedAt: null }));
+  const done = detail.doneTasks.map((task) => ({
+    ...task,
+    projectScope: project.scope,
+    priorityRank: null,
+  }));
+  return [...open, ...done];
 }
 
 function byPriorityRank(a: BoardTask, b: BoardTask): number {

@@ -5,7 +5,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import { ProjectService, type Project, type ProjectDetail } from '../data/project.service';
 import { CLOCK } from '../shared/clock';
-import { projectTask as task } from '../../testing/project-task.fixture';
+import { doneProjectTask, projectTask as task } from '../../testing/project-task.fixture';
 import { ProjectPage } from './project.page';
 
 const PROJECT: Project = {
@@ -18,25 +18,30 @@ const PROJECT: Project = {
 };
 
 function detail(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
-  return { project: PROJECT, tasks: [], checkpoints: [], ...overrides };
+  return { project: PROJECT, tasks: [], doneTasks: [], checkpoints: [], ...overrides };
 }
 
-async function setup(load: (id: string) => Promise<ProjectDetail | null>) {
+/** Opens the Cronologia tab unless told otherwise: most tests are about the dated view. */
+async function setup(
+  load: (id: string) => Promise<ProjectDetail | null>,
+  query: Record<string, string> = { vista: 'cronologia' },
+) {
   const projects = { load: vi.fn(load) };
   const params = new BehaviorSubject<ParamMap>(convertToParamMap({ id: 'p1' }));
+  const queryParams = new BehaviorSubject<ParamMap>(convertToParamMap(query));
   await TestBed.configureTestingModule({
     imports: [ProjectPage],
     providers: [
       provideRouter([]),
       { provide: ProjectService, useValue: projects },
-      { provide: ActivatedRoute, useValue: { paramMap: params } },
+      { provide: ActivatedRoute, useValue: { paramMap: params, queryParamMap: queryParams } },
       { provide: CLOCK, useValue: () => new Date(2026, 10, 25, 9, 0) },
     ],
   }).compileComponents();
   const fixture = TestBed.createComponent(ProjectPage);
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
-  return { fixture, element, projects, params, title: TestBed.inject(Title) };
+  return { fixture, element, projects, params, queryParams, title: TestBed.inject(Title) };
 }
 
 const text = (element: Element | null) => element?.textContent?.replace(/\s+/g, ' ').trim();
@@ -55,7 +60,7 @@ describe('ProjectPage', () => {
   it('shows the header with name, colour, scope and status, and sets the title', async () => {
     const { element, title, projects } = await setup(async () => detail({ tasks: [task()] }));
 
-    expect(projects.load).toHaveBeenCalledWith('p1');
+    expect(projects.load).toHaveBeenCalledWith('p1', new Date(2026, 10, 12, 0, 0));
     const tag = element.querySelector<HTMLElement>('h1 .project-tag')!;
     expect(tag.textContent).toBe('Casa');
     expect(tag.style.backgroundColor).toBe('rgb(47, 95, 147)');
@@ -242,7 +247,74 @@ describe('ProjectPage', () => {
     resolveFirst(detail());
     await fixture.whenStable();
 
-    expect(projects.load).toHaveBeenLastCalledWith('p2');
+    expect(projects.load).toHaveBeenLastCalledWith('p2', expect.any(Date));
     expect(text(element.querySelector('h1'))).toBe('Lavoro');
+  });
+
+  describe('tabs', () => {
+    const tabs = (element: HTMLElement) =>
+      Array.from(element.querySelectorAll<HTMLAnchorElement>('nav.tabs a')).map((a) => ({
+        text: text(a),
+        href: a.getAttribute('href'),
+        current: a.getAttribute('aria-current'),
+      }));
+
+    it('opens on the board, with the project tasks in their columns and no project tag', async () => {
+      const { element, fixture } = await setup(
+        async () =>
+          detail({
+            tasks: [
+              task({ id: 'a', title: 'Da iniziare', status: 'todo', priorityRank: 2 }),
+              task({ id: 'b', title: 'Bloccato', status: 'in_progress', isBlocked: true }),
+            ],
+          }),
+        {},
+      );
+
+      expect(tabs(element)).toEqual([
+        { text: 'Board', href: '/progetti/p1', current: 'page' },
+        { text: 'Cronologia', href: '/progetti/p1?vista=cronologia', current: null },
+      ]);
+      const column = (key: string) =>
+        Array.from(element.querySelectorAll(`[data-column="${key}"] h3`)).map((h) => h.textContent);
+      expect(column('todo')).toEqual(['Da iniziare']);
+      expect(column('blocked')).toEqual(['Bloccato']);
+      expect(element.querySelector('.card__project')).toBeNull();
+      expect(element.querySelector('.timeline')).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).classList).not.toContain('narrow');
+    });
+
+    it('shows the done tasks of the project in Fatto', async () => {
+      const { element } = await setup(
+        async () =>
+          detail({
+            doneTasks: [
+              doneProjectTask({ id: 'd', title: 'Finito', completedAt: '2026-11-24T16:00:00Z' }),
+            ],
+          }),
+        {},
+      );
+
+      const done = element.querySelector('[data-column="done"]')!;
+      expect(text(done.querySelector('h3'))).toBe('Finito');
+      expect(text(done.querySelector('.card__done'))).toBe('fatto il 24 nov');
+    });
+
+    it('switches to Cronologia from the address without reloading the project', async () => {
+      const { element, fixture, projects, queryParams } = await setup(
+        async () =>
+          detail({ tasks: [task({ title: 'Con data', effectiveDueDate: '2026-11-30' })] }),
+        {},
+      );
+
+      queryParams.next(convertToParamMap({ vista: 'cronologia' }));
+      await fixture.whenStable();
+
+      expect(tabs(element).map((t) => t.current)).toEqual([null, 'page']);
+      expect(element.querySelector('.timeline')).not.toBeNull();
+      expect(element.querySelector('app-board-columns')).toBeNull();
+      expect((fixture.nativeElement as HTMLElement).classList).toContain('narrow');
+      expect(projects.load).toHaveBeenCalledTimes(1);
+    });
   });
 });

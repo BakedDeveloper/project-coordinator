@@ -1,17 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
 import { SCOPE_FILTERS, toIsoDate, type ScopeFilter } from '../all-projects/all-projects.model';
-import { TaskCard } from '../all-projects/task-card';
 import { BoardService, type BoardTask } from '../data/board.service';
 import { CLOCK } from '../shared/clock';
-import { buildColumns, doneSince, projectOptions, type ColumnKey } from './board.model';
+import { BoardColumns } from './board-columns';
+import { buildColumns, doneSince, projectOptions } from './board.model';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
 /** Shared board of docs/viste.md: every task of every active project, by status. Read-only. */
 @Component({
   selector: 'app-board-page',
-  imports: [TaskCard],
+  imports: [BoardColumns],
   templateUrl: './board.page.html',
   styleUrl: './board.page.css',
 })
@@ -22,8 +22,6 @@ export class BoardPage {
   protected readonly scopes = SCOPE_FILTERS;
   protected readonly scope = signal<ScopeFilter>('all');
   protected readonly projectId = signal<string | null>(null);
-  /** The column shown on a phone, where only one fits. */
-  protected readonly current = signal<ColumnKey>('todo');
   protected readonly state = signal<LoadState>('loading');
   protected readonly today = signal(toIsoDate(this.clock()));
 
@@ -33,10 +31,6 @@ export class BoardPage {
   protected readonly projects = computed(() => projectOptions(this.tasks(), this.scope()));
   protected readonly columns = computed(() =>
     buildColumns(this.tasks(), { scope: this.scope(), projectId: this.projectId() }, this.since()),
-  );
-  /** Shown in an empty In corso: the first task of Da fare. */
-  protected readonly nextToStart = computed(
-    () => this.columns().find((c) => c.key === 'todo')?.tasks[0] ?? null,
   );
 
   constructor() {
