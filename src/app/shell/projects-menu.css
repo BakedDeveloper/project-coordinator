@@ -113,3 +113,20 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* Narrow screens: hanging off the button, the panel ran past the right edge.
+   It spans the header instead (the header is the positioned ancestor, see shell.css). */
+@media (max-width: 39.99rem) {
+  :host {
+    position: static;
+  }
+
+  .menu__panel {
+    top: calc(100% - 0.25rem);
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+}

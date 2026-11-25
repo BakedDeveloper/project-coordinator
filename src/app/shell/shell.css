@@ -1,4 +1,6 @@
 .shell__header {
+  /* Anchors the projects menu panel on narrow screens (projects-menu.css). */
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
