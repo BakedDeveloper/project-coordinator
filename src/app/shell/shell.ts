@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { LOGIN_PATH } from '../auth/auth.guards';
 import { AuthService } from '../data/auth.service';
@@ -16,7 +16,7 @@ const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
 /** Frame of every protected page: header with the theme and sign-out controls, then the page. */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink, ProjectsMenu],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ProjectsMenu],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
 })

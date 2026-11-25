@@ -1,0 +1,85 @@
+<div class="page-header">
+  <h1 class="page-header__title">Tutti i progetti</h1>
+  <div class="toolbar">
+    <div class="filters" role="group" aria-label="Ambito dei progetti">
+      @for (s of scopes; track s.value) {
+        <button
+          type="button"
+          class="filter"
+          [attr.aria-pressed]="scope() === s.value"
+          (click)="chooseScope(s.value)"
+        >
+          {{ s.label }}
+        </button>
+      }
+    </div>
+    <label class="project-filter">
+      <span class="project-filter__label">Progetto</span>
+      <select class="project-filter__select" (change)="chooseProject($event)">
+        <option value="" [selected]="projectId() === null">Tutti i progetti</option>
+        @for (p of projects(); track p.id) {
+          <option [value]="p.id" [selected]="projectId() === p.id">{{ p.name }}</option>
+        }
+      </select>
+    </label>
+  </div>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="message" role="status">Carico la board…</p>
+  }
+  @case ('error') {
+    <div class="message message--error" role="alert">
+      <p>Non riesco a caricare la board.</p>
+      <button type="button" class="retry" (click)="load()">Riprova</button>
+    </div>
+  }
+  @default {
+    <div class="column-tabs" role="group" aria-label="Colonna da mostrare">
+      @for (column of columns(); track column.key) {
+        <button
+          type="button"
+          class="column-tab"
+          [attr.aria-pressed]="current() === column.key"
+          (click)="current.set(column.key)"
+        >
+          {{ column.label }} <span class="column-tab__count">{{ column.tasks.length }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="board">
+      @for (column of columns(); track column.key) {
+        <section
+          class="column"
+          [attr.data-column]="column.key"
+          [class.column--current]="current() === column.key"
+          [attr.aria-labelledby]="'column-' + column.key"
+        >
+          <h2 class="column__header" [id]="'column-' + column.key">
+            <span class="column__label">{{ column.label }}</span>&ngsp;<span class="column__count"
+              >{{ column.tasks.length }} task</span
+            >
+          </h2>
+
+          @if (column.tasks.length > 0) {
+            <ol class="column__list">
+              @for (task of column.tasks; track task.id) {
+                <li>
+                  <app-task-card [task]="task" [today]="today()" [doneAt]="task.completedAt" />
+                </li>
+              }
+            </ol>
+          } @else if (column.key === 'in_progress' && nextToStart(); as next) {
+            <p class="column__empty">
+              Niente in corso. Il prossimo da iniziare: <strong>{{ next.title }}</strong>
+            </p>
+          } @else {
+            <p class="column__empty">Nessun task.</p>
+          }
+        </section>
+      }
+    </div>
+  }
+}

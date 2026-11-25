@@ -18,6 +18,12 @@ export const routes: Routes = [
         path: '',
         pathMatch: 'full',
         title: 'Tutti i progetti · Coordinatore',
+        loadComponent: () => import('./board/board.page').then((m) => m.BoardPage),
+      },
+      {
+        // The priority list (former view F) until the Oggi view replaces it (#31).
+        path: 'priorita',
+        title: 'Priorità · Coordinatore',
         loadComponent: () =>
           import('./all-projects/all-projects.page').then((m) => m.AllProjectsPage),
       },

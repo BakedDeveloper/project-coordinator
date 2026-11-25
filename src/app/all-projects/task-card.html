@@ -1,6 +1,8 @@
 <article class="card" [class.card--blocked]="task().isBlocked">
   <div class="card__rail">
-    @if (due(); as d) {
+    @if (done(); as d) {
+      <p class="card__done">{{ d }}</p>
+    } @else if (due(); as d) {
       <p class="card__due" [class.card__due--overdue]="d.overdue">{{ d.text }}</p>
     }
     @if (task().checkpointName; as checkpoint) {

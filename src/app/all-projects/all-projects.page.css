@@ -1,3 +1,10 @@
+/* List pages keep a readable width; the shell is wide for the boards. */
+:host {
+  display: block;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
 .page-header {
   display: flex;
   flex-wrap: wrap;
