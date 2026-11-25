@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { PrioritiesService, type PriorityTask } from '../data/priorities.service';
 import { CLOCK } from '../shared/clock';
@@ -48,6 +49,7 @@ async function setup(load: () => Promise<PriorityTask[]>) {
   await TestBed.configureTestingModule({
     imports: [AllProjectsPage],
     providers: [
+      provideRouter([]),
       { provide: PrioritiesService, useValue: priorities },
       { provide: CLOCK, useValue: () => new Date(2026, 10, 24, 9, 0) },
     ],

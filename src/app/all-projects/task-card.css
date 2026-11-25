@@ -46,6 +46,11 @@
   color: var(--color-on-project);
   font-size: 0.75rem;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.card__project:hover {
+  text-decoration: underline;
 }
 
 .card__title {

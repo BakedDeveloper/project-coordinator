@@ -15,6 +15,24 @@ export const LEVEL_RULES: Record<PriorityLevel, string> = {
   3: 'Il resto, per impatto',
 };
 
+/** What a task card shows: any open task, from view F or from a project page. */
+export type CardTask = Pick<
+  PriorityTask,
+  | 'id'
+  | 'title'
+  | 'nextAction'
+  | 'projectId'
+  | 'projectName'
+  | 'projectColor'
+  | 'effectiveDueDate'
+  | 'checkpointName'
+  | 'blocksOthers'
+  | 'isBlocked'
+  | 'isWaiting'
+  | 'hasQuestionToAsk'
+  | 'waitingOn'
+>;
+
 export interface ProjectSummary {
   projectId: string;
   projectName: string;
@@ -103,7 +121,7 @@ export function projectColor(projectId: string, color: string | null): string {
 }
 
 /** "domanda da fare · X" or "aspetta X", never both: a question to ask is also a wait. */
-export function waitingLabel(task: PriorityTask): string | null {
+export function waitingLabel(task: CardTask): string | null {
   if (task.hasQuestionToAsk) {
     return task.waitingOn ? `domanda da fare · ${task.waitingOn}` : 'domanda da fare';
   }

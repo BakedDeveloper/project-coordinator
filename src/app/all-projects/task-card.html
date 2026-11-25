@@ -9,7 +9,14 @@
   </div>
 
   <div class="card__body">
-    <span class="card__project" [style.background-color]="color()">{{ task().projectName }}</span>
+    @if (showProject()) {
+      <a
+        class="card__project"
+        [routerLink]="['/progetti', task().projectId]"
+        [style.background-color]="color()"
+        >{{ task().projectName }}</a
+      >
+    }
     <h3 class="card__title">{{ task().title }}</h3>
     @if (task().nextAction; as next) {
       <p class="card__next"><span class="card__next-label">Prossima azione:</span> {{ next }}</p>
