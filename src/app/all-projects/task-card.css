@@ -28,9 +28,12 @@
   color: var(--color-status-blocked);
 }
 
+/* The rail is narrow: hyphenate long words (the page is lang="it") instead of
+   breaking them at a random letter; overflow-wrap stays as the last resort. */
 .card__checkpoint {
   color: var(--color-text-secondary);
   overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 .card__body {
@@ -46,6 +49,11 @@
   color: var(--color-on-project);
   font-size: 0.75rem;
   font-weight: 600;
+  text-decoration: none;
+}
+
+.card__project:hover {
+  text-decoration: underline;
 }
 
 .card__title {

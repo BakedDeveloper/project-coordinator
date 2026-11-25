@@ -1,0 +1,240 @@
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.page-header__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.project-tag {
+  display: inline-block;
+  padding: 0.125rem 0.75rem;
+  border-radius: 999px;
+  color: var(--color-on-project);
+}
+
+.page-header__meta {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 4px solid var(--color-accent);
+  border-radius: 0.25rem;
+  background: var(--color-surface-muted);
+}
+
+.message {
+  color: var(--color-text-secondary);
+}
+
+.message__title {
+  margin: 0 0 0.5rem;
+  color: var(--color-text);
+  font-size: 1.5rem;
+}
+
+.message--error {
+  color: var(--color-status-blocked);
+}
+
+.message--error p {
+  margin: 0 0 0.5rem;
+}
+
+.retry {
+  min-height: 2.5rem;
+  padding: 0.375rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Board: three columns by status; rows by date; lines across all the columns. */
+
+.board__heads,
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.col--in_progress {
+  grid-column: 1;
+}
+
+.col--todo {
+  grid-column: 2;
+}
+
+.col--blocked {
+  grid-column: 3;
+}
+
+.board__heads {
+  margin-bottom: 0.5rem;
+}
+
+.board__head {
+  padding-bottom: 0.375rem;
+  border-bottom: 2px solid var(--color-text);
+}
+
+.board__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.board__head.col--in_progress .board__title {
+  color: var(--color-status-in-progress-text);
+}
+
+.board__head.col--todo .board__title {
+  color: var(--color-status-todo);
+}
+
+.board__head.col--blocked .board__title {
+  color: var(--color-status-blocked);
+}
+
+.board__hint {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.board__hint--narrow {
+  display: none;
+}
+
+.timeline {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell {
+  display: grid;
+  align-content: start;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cell__item {
+  min-width: 0;
+}
+
+/* The status is the column on wide screens: the label is for screen readers only. */
+.cell__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.line::after {
+  flex: 1;
+  content: '';
+  border-top: 2px solid currentColor;
+}
+
+.line--today {
+  color: var(--color-line-today);
+}
+
+.line--checkpoint {
+  color: var(--color-line-checkpoint);
+}
+
+.line--checkpoint::after {
+  border-top-style: dashed;
+}
+
+.line__label {
+  overflow-wrap: anywhere;
+}
+
+.undated {
+  margin-top: 2rem;
+}
+
+.undated__title {
+  margin: 0 0 0.75rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 1rem;
+}
+
+/* Phone: one column, the status as a label on each card. */
+@media (max-width: 47.99rem) {
+  .board__heads {
+    display: none;
+  }
+
+  .board__hint--narrow {
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .row > .cell {
+    grid-column: 1;
+  }
+
+  .cell:empty {
+    display: none;
+  }
+
+  .cell__status {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 0.25rem;
+    overflow: visible;
+    clip-path: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .col--in_progress .cell__status {
+    color: var(--color-status-in-progress-text);
+  }
+
+  .col--todo .cell__status {
+    color: var(--color-status-todo);
+  }
+
+  .col--blocked .cell__status {
+    color: var(--color-status-blocked);
+  }
+}

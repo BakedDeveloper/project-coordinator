@@ -1,14 +1,19 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import type { PriorityTask } from '../data/priorities.service';
 import { task } from '../../testing/priority-task.fixture';
 import { TaskCard } from './task-card';
 
-async function render(overrides: Partial<PriorityTask>, today = '2026-11-24') {
-  await TestBed.configureTestingModule({ imports: [TaskCard] }).compileComponents();
+async function render(overrides: Partial<PriorityTask>, today = '2026-11-24', showProject = true) {
+  await TestBed.configureTestingModule({
+    imports: [TaskCard],
+    providers: [provideRouter([])],
+  }).compileComponents();
   const fixture = TestBed.createComponent(TaskCard);
   fixture.componentRef.setInput('task', task(overrides));
   fixture.componentRef.setInput('today', today);
+  fixture.componentRef.setInput('showProject', showProject);
   await fixture.whenStable();
   return fixture.nativeElement as HTMLElement;
 }
@@ -30,6 +35,19 @@ describe('TaskCard', () => {
     const tag = element.querySelector<HTMLElement>('.card__project')!;
     expect(tag.textContent).toBe('Reply - Fleet');
     expect(tag.style.backgroundColor).toBe('rgb(47, 95, 147)');
+  });
+
+  it('links the project tag to the project page', async () => {
+    const element = await render({ projectId: 'p7' });
+
+    const tag = element.querySelector<HTMLAnchorElement>('a.card__project')!;
+    expect(tag.getAttribute('href')).toBe('/progetti/p7');
+  });
+
+  it('hides the project tag on the project page', async () => {
+    const element = await render({}, '2026-11-24', false);
+
+    expect(element.querySelector('.card__project')).toBeNull();
   });
 
   it('uses the fallback palette when the project has no colour', async () => {
