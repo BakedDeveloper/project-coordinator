@@ -167,4 +167,33 @@ describe('ProjectService', () => {
 
     await expect(service.load(ID)).rejects.toBeInstanceOf(ProjectUnavailableError);
   });
+
+  describe('list', () => {
+    it('reads every project by name', async () => {
+      const { service, calls } = setup({
+        projects: ok([
+          { id: 'a', name: 'Casa', status: 'active', color: null },
+          { id: 'b', name: 'Vecchio', status: 'closed', color: '#2f5f93' },
+        ]),
+      });
+
+      expect(await service.list()).toEqual([
+        { id: 'a', name: 'Casa', status: 'active', color: null },
+        { id: 'b', name: 'Vecchio', status: 'closed', color: '#2f5f93' },
+      ]);
+      expect(calls['projects']).toContainEqual(['order', ['name']]);
+    });
+
+    it('throws an error without database data when the query fails', async () => {
+      const { service } = setup({ projects: { data: null, error: { message: 'secret' } } });
+
+      await expect(service.list()).rejects.toBeInstanceOf(ProjectUnavailableError);
+    });
+
+    it('throws when the network fails', async () => {
+      const { service } = setup({ projects: 'reject' });
+
+      await expect(service.list()).rejects.toBeInstanceOf(ProjectUnavailableError);
+    });
+  });
 });

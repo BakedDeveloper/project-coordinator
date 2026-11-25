@@ -5,6 +5,7 @@ import { LOGIN_PATH } from '../auth/auth.guards';
 import { AuthService } from '../data/auth.service';
 import { isThemeChoice, type ThemeChoice } from '../data/preferences.service';
 import { ThemeService } from '../theme/theme.service';
+import { ProjectsMenu } from './projects-menu';
 
 const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
   { value: 'system', label: 'Sistema' },
@@ -15,7 +16,7 @@ const THEME_OPTIONS: readonly { value: ThemeChoice; label: string }[] = [
 /** Frame of every protected page: header with the theme and sign-out controls, then the page. */
 @Component({
   selector: 'app-shell',
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, ProjectsMenu],
   templateUrl: './shell.html',
   styleUrl: './shell.css',
 })

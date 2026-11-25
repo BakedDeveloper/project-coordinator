@@ -39,6 +39,15 @@ export interface ProjectTask {
   priorityRank: number | null;
 }
 
+/** One entry of the projects menu. */
+export interface ProjectLink {
+  id: string;
+  name: string;
+  status: ProjectStatus;
+  /** `projects.color`; null when the project has none. */
+  color: string | null;
+}
+
 export interface Checkpoint {
   id: string;
   name: string;
@@ -72,6 +81,26 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
   private readonly supabase = inject(SUPABASE);
+
+  /** Every project, any status, by name. */
+  async list(): Promise<ProjectLink[]> {
+    const result = await this.supabase
+      .from('projects')
+      .select('id, name, status, color')
+      .order('name')
+      .then(
+        (r) => r,
+        () => null,
+      );
+    if (!result || result.error) {
+      throw new ProjectUnavailableError();
+    }
+    return result.data.flatMap((row) =>
+      isStatus(row.status)
+        ? [{ id: row.id, name: row.name, status: row.status, color: row.color }]
+        : [],
+    );
+  }
 
   /** The project, or null when no project has this id. */
   async load(id: string): Promise<ProjectDetail | null> {

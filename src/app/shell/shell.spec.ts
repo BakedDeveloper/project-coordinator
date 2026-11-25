@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 
 import { AuthService } from '../data/auth.service';
+import { ProjectService } from '../data/project.service';
 import type { ThemeChoice } from '../data/preferences.service';
 import { ThemeService } from '../theme/theme.service';
 import { Shell } from './shell';
@@ -21,6 +22,7 @@ async function setup(choice: ThemeChoice = 'system') {
       provideRouter([]),
       { provide: AuthService, useValue: auth },
       { provide: ThemeService, useValue: theme },
+      { provide: ProjectService, useValue: { list: vi.fn(async () => []) } },
     ],
   }).compileComponents();
   const fixture = TestBed.createComponent(Shell);
