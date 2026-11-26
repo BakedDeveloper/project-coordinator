@@ -5,8 +5,8 @@ import { BadgeService, type ProjectBadgeData } from '../data/badge.service';
 import { initials, projectIcon } from './project-icons';
 
 /**
- * The badge of a project: its logo (or its client's) on a white tile, then the short name
- * in the project colour with a drawn icon, or the initials when there is no known icon.
+ * The badge of a project: for work projects the client logo on a white tile, then, in the
+ * project colour, the real project logo (or a drawn icon, or the initials) and the short name.
  *
  * Screen readers get the full project name; the logo and the icon are decorative.
  */
@@ -33,7 +33,8 @@ export class ProjectBadge {
   protected readonly label = computed(() => this.badge()?.shortName ?? this.name());
   /** True when the visible label is not the full name: screen readers get the full one. */
   protected readonly shortened = computed(() => this.label() !== this.name());
-  protected readonly logoUrl = computed(() => this.badge()?.logoUrl ?? null);
+  protected readonly logo = computed(() => this.badge()?.logo ?? null);
+  protected readonly clientLogo = computed(() => this.badge()?.clientLogo ?? null);
   protected readonly icon = computed(() => projectIcon(this.badge()?.icon ?? null));
   protected readonly initials = computed(() => initials(this.label()));
 

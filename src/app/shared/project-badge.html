@@ -1,9 +1,11 @@
 <span class="badge" [class.badge--large]="large()">
-  @if (logoUrl(); as url) {
-    <span class="badge__logo"><img class="badge__logo-img" [src]="url" alt="" /></span>
+  @if (clientLogo(); as url) {
+    <span class="badge__client"><img class="badge__client-img" [src]="url" alt="" /></span>
   }
   <span class="badge__tag" [style.background-color]="color()">
-    @if (icon(); as i) {
+    @if (logo(); as url) {
+      <span class="badge__logo"><img class="badge__logo-img" [src]="url" alt="" /></span>
+    } @else if (icon(); as i) {
       <svg class="badge__icon" [lucideIcon]="i" aria-hidden="true"></svg>
     } @else {
       <span class="badge__initials" aria-hidden="true">{{ initials() }}</span>

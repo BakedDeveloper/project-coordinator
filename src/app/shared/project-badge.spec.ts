@@ -17,34 +17,55 @@ async function render(badge: ProjectBadgeData | null, name = 'Reply - Fleet') {
   return fixture.nativeElement as HTMLElement;
 }
 
+const SVG = 'data:image/svg+xml;base64,PHN2Zy8+';
+const PNG = 'data:image/png;base64,iVBORw0KGgo=';
+
 const FLEET: ProjectBadgeData = {
   name: 'Reply - Fleet',
   shortName: 'Fleet',
   icon: 'truck',
-  logoUrl: 'https://signed/clients/enel.svg',
+  logo: SVG,
+  clientLogo: PNG,
 };
 
 describe('ProjectBadge', () => {
-  it('shows the logo, the short name with its icon, and the full name for screen readers', async () => {
+  it('shows the client logo, the project logo, the short name and the full name for screen readers', async () => {
     const element = await render(FLEET);
 
-    const logo = element.querySelector<HTMLImageElement>('.badge__logo-img')!;
-    expect(logo.getAttribute('src')).toBe('https://signed/clients/enel.svg');
+    const client = element.querySelector<HTMLImageElement>('.badge__client-img')!;
+    expect(client.getAttribute('src')).toBe(PNG);
+    expect(client.getAttribute('alt')).toBe('');
+    const logo = element.querySelector<HTMLImageElement>('.badge__tag .badge__logo-img')!;
+    expect(logo.getAttribute('src')).toBe(SVG);
     expect(logo.getAttribute('alt')).toBe('');
+    // The project logo replaces the drawn icon.
+    expect(element.querySelector('svg.badge__icon')).toBeNull();
     expect(element.querySelector('.badge__name')?.textContent).toBe('Fleet');
     expect(element.querySelector('.badge__name')?.getAttribute('aria-hidden')).toBe('true');
     expect(element.querySelector('.visually-hidden')?.textContent).toBe('Reply - Fleet');
-    expect(element.querySelector('svg.badge__icon')).not.toBeNull();
-    expect(element.querySelector('.badge__initials')).toBeNull();
     expect(element.querySelector<HTMLElement>('.badge__tag')!.style.backgroundColor).toBe(
       'rgb(47, 95, 147)',
     );
   });
 
-  it('shows the full name and the initials when there is no short name and no known icon', async () => {
-    const element = await render({ ...FLEET, shortName: null, icon: 'not-an-icon', logoUrl: null });
+  it('uses the drawn icon when the project has no logo, and no client tile without a client logo', async () => {
+    const element = await render({ ...FLEET, logo: null, clientLogo: null });
 
+    expect(element.querySelector('.badge__client')).toBeNull();
     expect(element.querySelector('.badge__logo')).toBeNull();
+    expect(element.querySelector('svg.badge__icon')).not.toBeNull();
+    expect(element.querySelector('.badge__initials')).toBeNull();
+  });
+
+  it('shows the full name and the initials without logo, short name or known icon', async () => {
+    const element = await render({
+      ...FLEET,
+      shortName: null,
+      icon: 'not-an-icon',
+      logo: null,
+      clientLogo: null,
+    });
+
     expect(element.querySelector('.badge__name')?.textContent).toBe('Reply - Fleet');
     expect(element.querySelector('.badge__name')?.hasAttribute('aria-hidden')).toBe(false);
     expect(element.querySelector('.visually-hidden')).toBeNull();

@@ -179,6 +179,7 @@ export type Database = {
           created_at: string
           id: string
           last_changed_by: string
+          logo: string | null
           logo_path: string | null
           name: string
           updated_at: string
@@ -187,6 +188,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_changed_by?: string
+          logo?: string | null
           logo_path?: string | null
           name: string
           updated_at?: string
@@ -195,6 +197,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_changed_by?: string
+          logo?: string | null
           logo_path?: string | null
           name?: string
           updated_at?: string
@@ -351,6 +354,7 @@ export type Database = {
           icon: string | null
           id: string
           last_changed_by: string
+          logo: string | null
           logo_path: string | null
           name: string
           scope: string
@@ -369,6 +373,7 @@ export type Database = {
           icon?: string | null
           id?: string
           last_changed_by?: string
+          logo?: string | null
           logo_path?: string | null
           name: string
           scope: string
@@ -387,6 +392,7 @@ export type Database = {
           icon?: string | null
           id?: string
           last_changed_by?: string
+          logo?: string | null
           logo_path?: string | null
           name?: string
           scope?: string
