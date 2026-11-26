@@ -47,7 +47,7 @@
   border-radius: 0 999px 999px 0;
 }
 
-/* Project logo: a small white tile inside the coloured part, so a coloured logo stays
+/* Project logo: a small logo tile inside the coloured part, so a coloured logo stays
    visible on a dark project colour. */
 .badge__logo {
   display: inline-flex;
