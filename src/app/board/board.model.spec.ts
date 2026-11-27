@@ -5,6 +5,7 @@ import {
   buildColumns,
   columnOf,
   doneSince,
+  groupByProject,
   moveTargets,
   projectBoardTasks,
   projectOptions,
@@ -75,6 +76,18 @@ describe('board model', () => {
     expect(columnOf(boardTask({ status: 'cancelled', isBlocked: true }))).toBe('cancelled');
     // Waiting for someone is a label, not a column.
     expect(columnOf(boardTask({ status: 'todo', isWaiting: true }))).toBe('todo');
+  });
+
+  it('groups the tasks of a column by project, keeping the column order', () => {
+    const groups = groupByProject([
+      boardTask({ id: 'b1', projectId: 'pb', projectName: 'Beta' }),
+      boardTask({ id: 'a1', projectId: 'pa', projectName: 'Alfa' }),
+      boardTask({ id: 'b2', projectId: 'pb', projectName: 'Beta' }),
+    ]);
+    expect(groups.map((g) => [g.projectName, g.tasks.map((t) => t.id)])).toEqual([
+      ['Beta', ['b1', 'b2']],
+      ['Alfa', ['a1']],
+    ]);
   });
 
   it('shows every column but Annullato until Simone chooses', () => {

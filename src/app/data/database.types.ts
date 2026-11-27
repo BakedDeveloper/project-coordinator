@@ -596,18 +596,21 @@ export type Database = {
       user_preferences: {
         Row: {
           board_columns: string[] | null
+          grouped_columns: string[] | null
           theme: string
           updated_at: string
           user_id: string
         }
         Insert: {
           board_columns?: string[] | null
+          grouped_columns?: string[] | null
           theme?: string
           updated_at?: string
           user_id?: string
         }
         Update: {
           board_columns?: string[] | null
+          grouped_columns?: string[] | null
           theme?: string
           updated_at?: string
           user_id?: string

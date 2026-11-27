@@ -117,4 +117,30 @@ describe('PreferencesService', () => {
       expect(String(error)).not.toContain('secret detail');
     });
   });
+
+  describe('grouped columns', () => {
+    it('reads the grouped columns in board order; an empty choice stays empty', async () => {
+      const { service, select } = setup({
+        data: { grouped_columns: ['done', 'todo'] },
+        error: null,
+      });
+      await expect(service.loadGroupedColumns()).resolves.toEqual(['todo', 'done']);
+      expect(select).toHaveBeenCalledWith('grouped_columns');
+
+      TestBed.resetTestingModule();
+      await expect(
+        setup({ data: { grouped_columns: [] }, error: null }).service.loadGroupedColumns(),
+      ).resolves.toEqual([]);
+      TestBed.resetTestingModule();
+      await expect(
+        setup({ data: null, error: null }).service.loadGroupedColumns(),
+      ).resolves.toBeNull();
+    });
+
+    it('upserts only grouped_columns, possibly empty', async () => {
+      const { service, upsert } = setup({ error: null });
+      await service.saveGroupedColumns([]);
+      expect(upsert).toHaveBeenCalledWith({ grouped_columns: [] }, { onConflict: 'user_id' });
+    });
+  });
 });

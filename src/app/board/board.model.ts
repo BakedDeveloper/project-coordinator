@@ -20,6 +20,9 @@ export const DEFAULT_VISIBLE_COLUMNS: readonly ColumnKey[] = BOARD_COLUMNS.map((
   (key) => key !== 'cancelled',
 );
 
+/** The columns grouped by project until Simone chooses: Fatto only. */
+export const DEFAULT_GROUPED_COLUMNS: readonly ColumnKey[] = ['done'];
+
 /** Fatto shows the tasks completed today and in the 13 days before. */
 export const DONE_DAYS = 14;
 
@@ -32,6 +35,15 @@ export interface BoardFilter {
 export interface BoardColumn {
   key: ColumnKey;
   label: string;
+  tasks: BoardTask[];
+}
+
+/** The tasks of one project inside a column. */
+export interface TaskGroup {
+  projectId: string;
+  projectName: string;
+  /** `projects.color`; null when the project has none. */
+  projectColor: string | null;
   tasks: BoardTask[];
 }
 
@@ -134,6 +146,29 @@ export function buildColumns(
     }
     return { key, label, tasks: columnTasks };
   });
+}
+
+/**
+ * The tasks of a column by project. A group comes where its first task is, so the groups keep
+ * the order of the column (latest completion in Fatto, best rank in the open columns), and
+ * so do the tasks inside a group.
+ */
+export function groupByProject(tasks: readonly BoardTask[]): TaskGroup[] {
+  const groups = new Map<string, TaskGroup>();
+  for (const task of tasks) {
+    let group = groups.get(task.projectId);
+    if (!group) {
+      group = {
+        projectId: task.projectId,
+        projectName: task.projectName,
+        projectColor: task.projectColor,
+        tasks: [],
+      };
+      groups.set(task.projectId, group);
+    }
+    group.tasks.push(task);
+  }
+  return [...groups.values()];
 }
 
 /** The projects that have tasks on the board within the scope, by name. */

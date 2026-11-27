@@ -16,6 +16,8 @@ const NOW = new Date(2026, 10, 25, 9, 0);
 interface Preferences {
   loadBoardColumns: () => Promise<BoardColumnKey[] | null>;
   saveBoardColumns: (columns: readonly BoardColumnKey[]) => Promise<void>;
+  loadGroupedColumns?: () => Promise<BoardColumnKey[] | null>;
+  saveGroupedColumns?: (columns: readonly BoardColumnKey[]) => Promise<void>;
 }
 
 async function render(
@@ -33,7 +35,14 @@ async function render(
     providers: [
       provideRouter([]),
       { provide: TaskService, useValue: { setStatus, delete: remove } },
-      { provide: PreferencesService, useValue: preferences },
+      {
+        provide: PreferencesService,
+        useValue: {
+          loadGroupedColumns: () => Promise.resolve(null),
+          saveGroupedColumns: () => Promise.resolve(),
+          ...preferences,
+        },
+      },
       { provide: ProjectService, useValue: { setStatus: setProjectStatus } },
       { provide: CLOCK, useValue: () => NOW },
     ],
@@ -178,6 +187,99 @@ describe('BoardColumns', () => {
 
     expect(setProjectStatus).toHaveBeenCalledWith('p9', 'active');
     expect(moved).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows Fatto as one closed card per project by default, in the column order; not the other columns', async () => {
+    const { fixture, element } = await render([
+      boardTask({ id: 'a', title: 'A1', projectId: 'pa', projectName: 'Alfa' }),
+      boardTask({ id: 'b', title: 'B1', projectId: 'pb', projectName: 'Beta', priorityRank: 2 }),
+      boardTask({
+        id: 'd1',
+        title: 'Fatto B',
+        projectId: 'pb',
+        projectName: 'Beta',
+        status: 'done',
+        priorityRank: null,
+        completedAt: '2026-11-24T16:00:00Z',
+      }),
+      boardTask({
+        id: 'd2',
+        title: 'Fatto A',
+        projectId: 'pa',
+        projectName: 'Alfa',
+        status: 'done',
+        priorityRank: null,
+        completedAt: '2026-11-23T16:00:00Z',
+      }),
+      boardTask({
+        id: 'd3',
+        title: 'Fatto B2',
+        projectId: 'pb',
+        projectName: 'Beta',
+        status: 'done',
+        priorityRank: null,
+        completedAt: '2026-11-20T16:00:00Z',
+      }),
+    ]);
+
+    const done = element.querySelector('[data-column="done"]')!;
+    const groups = [...done.querySelectorAll('.group')].map((g) =>
+      (g.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    );
+    // Beta has the latest completion: its group comes first, with both its tasks.
+    expect(groups).toEqual(['Beta 2 task', 'Alfa 1 task']);
+    // One closed card per project: its tasks show only when it is opened.
+    expect(column(element, 'done')).toEqual([]);
+    const beta = done.querySelector<HTMLButtonElement>('.group')!;
+    expect(beta.getAttribute('aria-expanded')).toBe('false');
+    beta.click();
+    await fixture.whenStable();
+    expect(beta.getAttribute('aria-expanded')).toBe('true');
+    expect(column(element, 'done')).toEqual(['Fatto B', 'Fatto B2']);
+    expect(done.querySelector('.column__group')!.getAttribute('aria-pressed')).toBe('true');
+
+    const todo = element.querySelector('[data-column="todo"]')!;
+    expect(todo.querySelector('.group')).toBeNull();
+    expect(todo.querySelector('.column__group')!.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('groups a column on request and saves the choice', async () => {
+    const saveGroupedColumns = vi.fn(() => Promise.resolve());
+    const { fixture, element } = await render(
+      [boardTask({ id: 'a', title: 'A1', projectId: 'pa', projectName: 'Alfa' })],
+      undefined,
+      {
+        loadBoardColumns: () => Promise.resolve(null),
+        saveBoardColumns: () => Promise.resolve(),
+        loadGroupedColumns: () => Promise.resolve<BoardColumnKey[]>([]),
+        saveGroupedColumns,
+      },
+    );
+
+    const toggle = element.querySelector<HTMLButtonElement>('[data-column="todo"] .column__group')!;
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+    toggle.click();
+    await fixture.whenStable();
+
+    expect(saveGroupedColumns).toHaveBeenCalledWith(['todo']);
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(element.querySelector('[data-column="todo"] .group')?.textContent).toContain('Alfa');
+  });
+
+  it('never groups on a project board', async () => {
+    const { fixture, element } = await render([
+      boardTask({
+        id: 'd',
+        status: 'done',
+        priorityRank: null,
+        completedAt: '2026-11-24T16:00:00Z',
+      }),
+    ]);
+    fixture.componentRef.setInput('showProject', false);
+    await fixture.whenStable();
+
+    expect(element.querySelector('.column__group')).toBeNull();
+    expect(element.querySelector('.group')).toBeNull();
   });
 
   it('offers no delete for a GitHub task', async () => {
@@ -335,10 +437,10 @@ describe('BoardColumns', () => {
 
     button(element, 'Sposta in…').click();
     await fixture.whenStable();
-    target(element, 'Fatto').click();
+    target(element, 'In corso').click();
     fixture.detectChanges();
 
-    expect(column(element, 'done')).toEqual(['Preventivo']);
+    expect(column(element, 'in_progress')).toEqual(['Preventivo']);
     expect(element.querySelector('.move__pending')?.textContent).toContain('Salvo');
     finish();
     await fixture.whenStable();

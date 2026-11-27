@@ -118,6 +118,24 @@
   }
 }
 
+/* Group toggle and project groups */
+.column__group {
+  margin: -0.25rem 0 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.column__group[aria-pressed='true'] {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
 .column__drop {
   display: grid;
   gap: 0.75rem;
