@@ -1,0 +1,82 @@
+# Database migrations of the coordinator (issue #59).
+#
+# - Pull request touching supabase/migrations/: dry run against the coordinator project, so
+#   the PR shows what would be applied (CLAUDE.md, rule 3: show before applying).
+# - Push to main touching supabase/migrations/: apply them. Merging the PR is Simone's
+#   confirmation.
+#
+# Only the coordinator project: the ref is fixed here. Secrets live in GitHub, never in the
+# repository: SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD.
+
+name: Database migrations
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+
+permissions:
+  contents: read
+
+# One run at a time against the database; never cancel one halfway.
+concurrency:
+  group: supabase-migrations
+  cancel-in-progress: false
+
+env:
+  PROJECT_REF: cmyocabucpfzsvqyvspc
+
+jobs:
+  dry-run:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Show the migrations that would be applied
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -o pipefail
+          pnpm exec supabase db push --remote="$PROJECT_REF" --dry-run 2>&1 | tee dry-run.txt
+          {
+            echo '### Migrations that the merge will apply'
+            echo '```'
+            cat dry-run.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  apply:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply the migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          set -o pipefail
+          pnpm exec supabase db push --remote="$PROJECT_REF" 2>&1 | tee push.txt
+          {
+            echo '### Migrations applied'
+            echo '```'
+            cat push.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
