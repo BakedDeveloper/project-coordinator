@@ -1,5 +1,5 @@
 <div class="column-tabs" role="group" aria-label="Colonna da mostrare">
-  @for (column of columns(); track column.key) {
+  @for (column of shown(); track column.key) {
     <button
       type="button"
       class="column-tab"
@@ -11,8 +11,15 @@
   }
 </div>
 
-<div class="board">
-  @for (column of columns(); track column.key) {
+@if (error(); as message) {
+  <div class="move-error" role="alert">
+    <p class="move-error__text">{{ message }}</p>
+    <button type="button" class="move-error__close" (click)="error.set(null)">Chiudi</button>
+  </div>
+}
+
+<div class="board" cdkDropListGroup>
+  @for (column of shown(); track column.key) {
     <section
       class="column"
       [attr.data-column]="column.key"
@@ -25,26 +32,83 @@
         >
       </h2>
 
-      @if (column.tasks.length > 0) {
-        <ol class="column__list">
-          @for (task of column.tasks; track task.id) {
-            <li>
-              <app-task-card
-                [task]="task"
-                [today]="today()"
-                [showProject]="showProject()"
-                [doneAt]="task.completedAt"
-              />
-            </li>
-          }
-        </ol>
-      } @else if (column.key === 'in_progress' && nextToStart(); as next) {
-        <p class="column__empty">
-          Niente in corso. Il prossimo da iniziare: <strong>{{ next.title }}</strong>
-        </p>
-      } @else {
-        <p class="column__empty">Nessun task.</p>
-      }
+      <div
+        class="column__drop"
+        cdkDropList
+        [cdkDropListData]="column.key"
+        [cdkDropListEnterPredicate]="canEnter"
+        [cdkDropListSortingDisabled]="true"
+        (cdkDropListDropped)="dropped($event)"
+      >
+        @if (column.tasks.length > 0) {
+          <ol class="column__list">
+            @for (task of column.tasks; track task.id) {
+              <li
+                class="item"
+                cdkDrag
+                [cdkDragData]="task"
+                [cdkDragDisabled]="!canDrag(task)"
+                [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+                cdkDragPreviewContainer="parent"
+              >
+                <app-task-card
+                  [task]="task"
+                  [today]="today()"
+                  [showProject]="showProject()"
+                  [doneAt]="task.completedAt"
+                />
+
+                @if (task.fromGithub) {
+                  <p class="move__locked">
+                    <svg class="move__lock" lucideLock aria-hidden="true"></svg>
+                    Lo stato lo decide GitHub: chiudi o riapri la issue.
+                  </p>
+                } @else if (isPending(task)) {
+                  <p class="move__pending" role="status">Salvo…</p>
+                } @else if (targets(task); as targetList) {
+                  @if (targetList.length > 0) {
+                    <div class="move">
+                      <button
+                        #trigger
+                        type="button"
+                        class="move__trigger"
+                        [attr.aria-expanded]="menuFor() === task.id"
+                        [attr.aria-controls]="'move-' + task.id"
+                        (click)="toggleMenu(task)"
+                        (keydown.escape)="closeMenu(trigger)"
+                      >
+                        Sposta in…<span class="visually-hidden"> {{ task.title }}</span>
+                      </button>
+                      @if (menuFor() === task.id) {
+                        <ul class="move__menu" [id]="'move-' + task.id">
+                          @for (target of targetList; track target.key) {
+                            <li>
+                              <button
+                                type="button"
+                                class="move__target"
+                                (click)="chooseTarget(task, target.key)"
+                                (keydown.escape)="closeMenu(trigger)"
+                              >
+                                {{ target.label }}
+                              </button>
+                            </li>
+                          }
+                        </ul>
+                      }
+                    </div>
+                  }
+                }
+              </li>
+            }
+          </ol>
+        } @else if (column.key === 'in_progress' && nextToStart(); as next) {
+          <p class="column__empty">
+            Niente in corso. Il prossimo da iniziare: <strong>{{ next.title }}</strong>
+          </p>
+        } @else {
+          <p class="column__empty">Nessun task.</p>
+        }
+      </div>
     </section>
   }
 </div>

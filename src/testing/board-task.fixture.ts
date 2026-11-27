@@ -19,6 +19,7 @@ export function boardTask(overrides: Partial<BoardTask> = {}): BoardTask {
     isWaiting: false,
     hasQuestionToAsk: false,
     waitingOn: null,
+    fromGithub: false,
     completedAt: null,
     ...overrides,
   };

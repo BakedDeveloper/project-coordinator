@@ -36,6 +36,6 @@
     </div>
   }
   @default {
-    <app-board-columns [columns]="columns()" [today]="today()" />
+    <app-board-columns [columns]="columns()" [today]="today()" (moved)="refresh()" />
   }
 }

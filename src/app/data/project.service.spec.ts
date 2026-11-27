@@ -62,6 +62,7 @@ const taskRow = (overrides: Record<string, unknown> = {}) => ({
   is_waiting: false,
   has_question_to_ask: false,
   waiting_on: null,
+  origin: 'coordinator',
   created_at: '2026-11-20T10:00:00Z',
   ...overrides,
 });
@@ -77,7 +78,12 @@ describe('ProjectService', () => {
       checkpoints: ok([{ id: 'c1', name: 'Trasloco', due_date: '2026-12-01' }]),
       v_priorities: ok([{ id: 't1', priority_rank: 4 }]),
       'v_tasks#2': ok([
-        taskRow({ id: 'd1', status: 'done', completed_at: '2026-11-24T16:00:00Z' }),
+        taskRow({
+          id: 'd1',
+          status: 'done',
+          origin: 'github',
+          completed_at: '2026-11-24T16:00:00Z',
+        }),
         taskRow({ id: 'd2', status: 'done', completed_at: null }),
       ]),
     });
@@ -116,6 +122,7 @@ describe('ProjectService', () => {
           isWaiting: false,
           hasQuestionToAsk: false,
           waitingOn: null,
+          fromGithub: false,
           createdAt: '2026-11-20T10:00:00Z',
           priorityRank: 4,
         },
@@ -136,6 +143,7 @@ describe('ProjectService', () => {
           isWaiting: false,
           hasQuestionToAsk: false,
           waitingOn: null,
+          fromGithub: true,
           createdAt: '2026-11-20T10:00:00Z',
           completedAt: '2026-11-24T16:00:00Z',
         },

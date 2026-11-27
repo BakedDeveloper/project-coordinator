@@ -45,6 +45,56 @@ export function columnOf(task: BoardTask): ColumnKey {
   return task.isBlocked ? 'blocked' : task.status;
 }
 
+/** The columns a card can be moved to: Bloccato never, it needs a reason (a block). */
+export type TargetColumn = Exclude<ColumnKey, 'blocked'>;
+
+/**
+ * Where a task can be moved. GitHub tasks nowhere: GitHub decides their status. A blocked
+ * task only to Fatto: in Da fare or In corso it would stay blocked, so in Bloccato.
+ */
+export function moveTargets(task: BoardTask): TargetColumn[] {
+  if (task.fromGithub) {
+    return [];
+  }
+  const from = columnOf(task);
+  if (from === 'blocked') {
+    return ['done'];
+  }
+  return (['todo', 'in_progress', 'done'] as const).filter((key) => key !== from);
+}
+
+/**
+ * The columns with one task moved, while the database is being written: the task goes at
+ * the top of Fatto (the most recent) or at the bottom of an open column. The next reload
+ * puts it back in `priority_rank` order.
+ */
+export function withMove(
+  columns: readonly BoardColumn[],
+  taskId: string,
+  to: TargetColumn,
+  now: Date,
+): BoardColumn[] {
+  const task = columns.flatMap((c) => c.tasks).find((t) => t.id === taskId);
+  if (!task) {
+    return [...columns];
+  }
+  const moved: BoardTask =
+    to === 'done'
+      ? { ...task, status: 'done', completedAt: now.toISOString() }
+      : { ...task, status: to, completedAt: null };
+  return columns.map((column) => {
+    const tasks = column.tasks.filter((t) => t.id !== taskId);
+    if (column.key === to) {
+      if (to === 'done') {
+        tasks.unshift(moved);
+      } else {
+        tasks.push(moved);
+      }
+    }
+    return { ...column, tasks };
+  });
+}
+
 /**
  * Splits the tasks into the four columns. Open columns follow `priority_rank` from the
  * database; Fatto shows the tasks completed since `since`, the most recent first.

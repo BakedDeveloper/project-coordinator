@@ -8,7 +8,7 @@ import { buildColumns, doneSince, projectOptions } from './board.model';
 
 type LoadState = 'loading' | 'ready' | 'error';
 
-/** Shared board of docs/viste.md: every task of every active project, by status. Read-only. */
+/** Shared board of docs/viste.md: every task of every active project, by status. */
 @Component({
   selector: 'app-board-page',
   imports: [BoardColumns],
@@ -49,6 +49,18 @@ export class BoardPage {
     } catch {
       // No details: they could contain project data (CLAUDE.md, Sicurezza).
       this.state.set('error');
+    }
+  }
+
+  /** After a move: reads again without the loading message, so the board stays in place. */
+  protected async refresh(): Promise<void> {
+    const now = this.clock();
+    try {
+      this.tasks.set(await this.board.load(doneSince(now)));
+      this.today.set(toIsoDate(now));
+      this.since.set(doneSince(now));
+    } catch {
+      // The move is saved; the board keeps the moved card until the next load.
     }
   }
 
