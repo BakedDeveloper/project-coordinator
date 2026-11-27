@@ -19,10 +19,11 @@ URL dell'API: `https://cmyocabucpfzsvqyvspc.supabase.co` (non è un segreto).
 - **Questa app**: le scritture risultano `manual`, senza fare niente di speciale.
 - **Sincronizzazione GitHub** (da costruire): fonte `github`. Per Nutrirea GitHub decide titolo e aperto/chiuso; il coordinatore decide impatto, scadenze, prossima azione, attese, blocchi e ore.
 - Ogni modifica finisce in `activity_log` (lo riempiono solo i trigger).
+- **Istruzioni per gli account dei progetti** (`agent_instructions`, migrazione `20261127142408_agent_instructions.sql`, issue #41): una riga per argomento, in Markdown. La skill le legge all'inizio di ogni aggiornamento (`select key, title, body from public.agent_instructions where active order by position`) e valgono più del suo testo. Quando una regola cambia si aggiorna la riga, dopo l'ok di Simone sul testo: niente più copia e incolla nella skill. Le righe non si cancellano (`active = false`). Il connettore Supabase lavora come `postgres` e non passa dalle policy; le policy valgono per l'app e chiudono fuori chiunque altro.
 
 ## Lo schema (migrazioni in `supabase/migrations/`)
 
-Tabelle: `projects`, `clients`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
+Tabelle: `projects`, `clients`, `agent_instructions`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
 
 Preferenze dell'app: `user_preferences`, una riga per utente, una colonna per preferenza con il suo controllo (oggi `theme`: `system`, `light`, `dark`). `updated_at` lo aggiorna un trigger; niente `activity_log`; nessuna cancellazione. Ogni nuova preferenza si aggiunge come colonna, con una migrazione per issue (epic #13).
 
