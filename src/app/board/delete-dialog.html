@@ -1,0 +1,35 @@
+<dialog
+  #dialog
+  class="confirm"
+  aria-labelledby="confirm-title"
+  aria-describedby="confirm-text"
+  (close)="closed.emit()"
+>
+  @if (task(); as t) {
+    <h2 class="confirm__title" id="confirm-title">Eliminare il task?</h2>
+    <p class="confirm__text" id="confirm-text">
+      «{{ t.title }}» sparisce per sempre, con i suoi blocchi e le sue attese. Non si può annullare.
+      Se vuoi solo toglierlo dalla board, spostalo in Annullato.
+    </p>
+    @if (error(); as message) {
+      <p class="confirm__error" role="alert">{{ message }}</p>
+    }
+    <div class="confirm__actions">
+      @if (hasHours()) {
+        <button type="button" class="confirm__button" (click)="cancelInstead.emit(t)">
+          Sposta in Annullato
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="confirm__button confirm__button--danger"
+          [disabled]="deleting()"
+          (click)="confirm.emit(t)"
+        >
+          {{ deleting() ? 'Elimino…' : 'Elimina per sempre' }}
+        </button>
+      }
+      <button type="button" class="confirm__button" autofocus (click)="close()">Annulla</button>
+    </div>
+  }
+</dialog>

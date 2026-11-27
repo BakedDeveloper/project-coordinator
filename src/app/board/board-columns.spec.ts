@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { boardTask } from '../../testing/board-task.fixture';
 import type { BoardTask } from '../data/board.service';
 import { PreferencesService, type BoardColumnKey } from '../data/preferences.service';
-import { TaskService } from '../data/task.service';
+import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
 import { buildColumns, doneSince } from './board.model';
@@ -24,12 +24,13 @@ async function render(
     loadBoardColumns: vi.fn(() => Promise.resolve(null)),
     saveBoardColumns: vi.fn(() => Promise.resolve()),
   },
+  remove = vi.fn(() => Promise.resolve()),
 ) {
   await TestBed.configureTestingModule({
     imports: [BoardColumns],
     providers: [
       provideRouter([]),
-      { provide: TaskService, useValue: { setStatus } },
+      { provide: TaskService, useValue: { setStatus, delete: remove } },
       { provide: PreferencesService, useValue: preferences },
       { provide: CLOCK, useValue: () => NOW },
     ],
@@ -44,7 +45,8 @@ async function render(
   fixture.componentInstance.moved.subscribe(moved);
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
-  return { fixture, element, setStatus, moved, preferences };
+  document.body.appendChild(element);
+  return { fixture, element, setStatus, moved, preferences, remove };
 }
 
 function shownColumns(element: HTMLElement): string[] {
@@ -91,6 +93,71 @@ function target(element: HTMLElement, label: string): HTMLButtonElement {
 }
 
 describe('BoardColumns', () => {
+  afterEach(() => document.body.querySelectorAll('app-board-columns').forEach((e) => e.remove()));
+
+  it('deletes a task after a confirmation that names it', async () => {
+    const { fixture, element, remove, moved } = await render([
+      boardTask({ id: 't1', title: 'Creato per sbaglio' }),
+    ]);
+
+    button(element, 'Elimina').click();
+    await fixture.whenStable();
+    const dialog = element.querySelector('dialog')!;
+    expect(dialog.hasAttribute('open')).toBe(true);
+    expect(dialog.textContent).toContain('«Creato per sbaglio» sparisce per sempre');
+    expect(remove).not.toHaveBeenCalled();
+
+    button(dialog, 'Elimina per sempre').click();
+    await fixture.whenStable();
+
+    expect(remove).toHaveBeenCalledWith('t1');
+    expect(column(element, 'todo')).toEqual([]);
+    expect(dialog.hasAttribute('open')).toBe(false);
+    expect(moved).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps a task with logged hours and offers Annullato instead', async () => {
+    const { fixture, element, setStatus } = await render(
+      [boardTask({ id: 't1', title: 'Con ore' })],
+      undefined,
+      undefined,
+      vi.fn(() => Promise.reject(new TaskHasHoursError())),
+    );
+
+    button(element, 'Elimina').click();
+    await fixture.whenStable();
+    const dialog = element.querySelector('dialog')!;
+    button(dialog, 'Elimina per sempre').click();
+    await fixture.whenStable();
+
+    expect(dialog.querySelector('[role="alert"]')?.textContent).toContain('Ha ore registrate');
+    expect(column(element, 'todo')).toEqual(['Con ore']);
+
+    button(dialog, 'Sposta in Annullato').click();
+    await fixture.whenStable();
+    expect(setStatus).toHaveBeenCalledWith('t1', 'cancelled');
+  });
+
+  it('closes the confirmation with Annulla and gives the focus back', async () => {
+    const { fixture, element, remove } = await render([boardTask({ id: 't1' })]);
+
+    const trigger = button(element, 'Elimina');
+    trigger.click();
+    await fixture.whenStable();
+    button(element.querySelector('dialog')!, 'Annulla').click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('dialog')!.hasAttribute('open')).toBe(false);
+    expect(remove).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('offers no delete for a GitHub task', async () => {
+    const { element } = await render([boardTask({ id: 'g1', fromGithub: true })]);
+
+    expect(element.querySelector('.move__delete')).toBeNull();
+  });
+
   it('moves a card with the "Sposta in…" menu and tells the page', async () => {
     const { fixture, element, setStatus, moved } = await render([
       boardTask({ id: 't1', title: 'Preventivo' }),

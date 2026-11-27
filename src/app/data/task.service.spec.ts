@@ -1,7 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 
 import { SUPABASE } from './supabase.client';
-import { TaskCreateError, TaskService, TaskUpdateError, type NewTask } from './task.service';
+import {
+  TaskCreateError,
+  TaskDeleteError,
+  TaskHasHoursError,
+  TaskService,
+  TaskUpdateError,
+  type NewTask,
+} from './task.service';
 
 interface Result {
   data: unknown;
@@ -12,7 +19,7 @@ interface Result {
 function setup(result: Result | Promise<never>) {
   const calls: [string, ...unknown[]][] = [];
   const builder: Record<string, unknown> = {};
-  for (const method of ['update', 'insert', 'eq', 'neq', 'select', 'single']) {
+  for (const method of ['update', 'insert', 'delete', 'eq', 'neq', 'select', 'single']) {
     builder[method] = (...args: unknown[]) => {
       calls.push([method, ...args]);
       return builder;
@@ -103,6 +110,38 @@ describe('TaskService', () => {
       TestBed.resetTestingModule();
       const offline = setup(Promise.reject(new Error('offline')));
       await expect(offline.service.create(NEW_TASK)).rejects.toBeInstanceOf(TaskCreateError);
+    });
+  });
+
+  describe('delete', () => {
+    it('deletes that task, never a GitHub one', async () => {
+      const { service, from, calls } = setup({ data: [{ id: 't1' }], error: null });
+
+      await service.delete('t1');
+
+      expect(from).toHaveBeenCalledWith('tasks');
+      expect(calls).toContainEqual(['delete']);
+      expect(calls).toContainEqual(['eq', 'id', 't1']);
+      expect(calls).toContainEqual(['neq', 'origin', 'github']);
+    });
+
+    it('says when the task has logged hours, which keep it in the database', async () => {
+      const { service } = setup({ data: null, error: { code: '23503', message: 'secret detail' } });
+
+      const error = await service.delete('t1').catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(TaskHasHoursError);
+      expect(String(error)).not.toContain('secret detail');
+    });
+
+    it('fails when nothing was deleted, on an error or a network failure', async () => {
+      await expect(setup({ data: [], error: null }).service.delete('t1')).rejects.toBeInstanceOf(
+        TaskDeleteError,
+      );
+      TestBed.resetTestingModule();
+      const offline = setup(Promise.reject(new Error('offline')));
+      const error = await offline.service.delete('t1').catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(TaskDeleteError);
+      expect(error).not.toBeInstanceOf(TaskHasHoursError);
     });
   });
 });

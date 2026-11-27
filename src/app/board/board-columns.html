@@ -110,6 +110,14 @@
                       >
                         Sposta in…<span class="visually-hidden"> {{ task.title }}</span>
                       </button>
+                      <button
+                        #deleteTrigger
+                        type="button"
+                        class="move__delete"
+                        (click)="askDelete(task, deleteTrigger)"
+                      >
+                        Elimina<span class="visually-hidden"> {{ task.title }}</span>
+                      </button>
                       @if (menuFor() === task.id) {
                         <ul class="move__menu" [id]="'move-' + task.id">
                           @for (target of targetList; track target.key) {
@@ -143,3 +151,13 @@
     </section>
   }
 </div>
+
+<app-delete-dialog
+  [task]="toDelete()"
+  [deleting]="deleting()"
+  [error]="deleteError()"
+  [hasHours]="hasHours()"
+  (confirm)="confirmDelete($event)"
+  (cancelInstead)="cancelInstead($event)"
+  (closed)="deleteClosed()"
+/>

@@ -6,13 +6,25 @@ import {
   type CdkDragDrop,
   type CdkDropList as DropList,
 } from '@angular/cdk/drag-drop';
-import { Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
+import {
+  Component,
+  Injector,
+  afterNextRender,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { LucideLock } from '@lucide/angular';
 
 import { TaskCard } from '../all-projects/task-card';
+import { DeleteDialog } from './delete-dialog';
 import type { BoardTask } from '../data/board.service';
 import { PreferencesService } from '../data/preferences.service';
-import { TaskService } from '../data/task.service';
+import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import {
   BOARD_COLUMNS,
@@ -36,7 +48,7 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
  */
 @Component({
   selector: 'app-board-columns',
-  imports: [TaskCard, CdkDropListGroup, CdkDropList, CdkDrag, LucideLock],
+  imports: [TaskCard, CdkDropListGroup, CdkDropList, CdkDrag, LucideLock, DeleteDialog],
   templateUrl: './board-columns.html',
   styleUrl: './board-columns.css',
 })
@@ -44,6 +56,7 @@ export class BoardColumns {
   private readonly taskService = inject(TaskService);
   private readonly clock = inject(CLOCK);
   private readonly preferences = inject(PreferencesService);
+  private readonly injector = inject(Injector);
 
   readonly columns = input.required<BoardColumn[]>();
   /** Today as an ISO date, to tell due from overdue. */
@@ -75,13 +88,30 @@ export class BoardColumns {
     computation: () => new Map(),
   });
   protected readonly error = signal<string | null>(null);
+  /** Tasks deleted, hidden until the page gives new columns. */
+  private readonly removed = linkedSignal<BoardColumn[], ReadonlySet<string>>({
+    source: this.columns,
+    computation: () => new Set(),
+  });
+
+  /** The task in the delete confirmation. */
+  protected readonly toDelete = signal<BoardTask | null>(null);
+  protected readonly deleting = signal(false);
+  protected readonly deleteError = signal<string | null>(null);
+  /** The task has logged hours: it cannot be deleted, only cancelled. */
+  protected readonly hasHours = signal(false);
+  private readonly deleteDialog = viewChild.required(DeleteDialog);
+  private deleteReturnFocus: HTMLElement | null = null;
 
   protected readonly shown = computed(() => {
     let columns = this.columns();
     for (const [taskId, to] of this.pending()) {
       columns = withMove(columns, taskId, to, this.clock());
     }
-    return columns;
+    const removed = this.removed();
+    return removed.size === 0
+      ? columns
+      : columns.map((c) => ({ ...c, tasks: c.tasks.filter((t) => !removed.has(t.id)) }));
   });
 
   /** The columns on screen: the visible ones, with the moves being written. */
@@ -174,6 +204,63 @@ export class BoardColumns {
   protected chooseTarget(task: BoardTask, to: TargetColumn): void {
     this.menuFor.set(null);
     void this.move(task, to);
+  }
+
+  protected askDelete(task: BoardTask, trigger: HTMLElement): void {
+    this.menuFor.set(null);
+    this.deleteReturnFocus = trigger;
+    this.deleteError.set(null);
+    this.hasHours.set(false);
+    this.toDelete.set(task);
+    // After the content is drawn, so the dialog focuses its Annulla button.
+    afterNextRender(() => this.deleteDialog().open(), {
+      injector: this.injector,
+    });
+  }
+
+  protected closeDelete(): void {
+    this.deleteDialog().close();
+  }
+
+  /** The dialog closed, by a button or Escape: back to where Simone was. */
+  protected deleteClosed(): void {
+    this.toDelete.set(null);
+    this.deleting.set(false);
+    this.deleteReturnFocus?.focus();
+    this.deleteReturnFocus = null;
+  }
+
+  protected async confirmDelete(task: BoardTask): Promise<void> {
+    if (this.deleting() || task.fromGithub) {
+      return;
+    }
+    this.deleting.set(true);
+    this.deleteError.set(null);
+    try {
+      await this.taskService.delete(task.id);
+      this.removed.update((r) => new Set(r).add(task.id));
+      // The card is gone: the focus goes to the board, not to a removed button.
+      this.deleteReturnFocus = null;
+      this.closeDelete();
+      this.moved.emit();
+    } catch (e) {
+      // No details: they could contain project data (CLAUDE.md, Sicurezza).
+      if (e instanceof TaskHasHoursError) {
+        this.hasHours.set(true);
+        this.deleteError.set(
+          'Ha ore registrate: non si può eliminare. Puoi spostarlo in Annullato.',
+        );
+      } else {
+        this.deleteError.set('Non sono riuscito a eliminare il task. Riprova.');
+      }
+    } finally {
+      this.deleting.set(false);
+    }
+  }
+
+  protected cancelInstead(task: BoardTask): void {
+    this.closeDelete();
+    void this.move(task, 'cancelled');
   }
 
   async move(task: BoardTask, to: TargetColumn): Promise<void> {
