@@ -47,6 +47,42 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_instructions: {
+        Row: {
+          active: boolean
+          body: string
+          created_at: string
+          id: string
+          key: string
+          last_changed_by: string
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body: string
+          created_at?: string
+          id?: string
+          key: string
+          last_changed_by?: string
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string
+          created_at?: string
+          id?: string
+          key?: string
+          last_changed_by?: string
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blocks: {
         Row: {
           blocked_person_id: string | null
@@ -559,16 +595,19 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          board_columns: string[] | null
           theme: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          board_columns?: string[] | null
           theme?: string
           updated_at?: string
           user_id?: string
         }
         Update: {
+          board_columns?: string[] | null
           theme?: string
           updated_at?: string
           user_id?: string
