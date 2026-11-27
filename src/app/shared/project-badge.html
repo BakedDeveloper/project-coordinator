@@ -1,0 +1,20 @@
+<span class="badge" [class.badge--large]="large()">
+  @if (clientLogo(); as url) {
+    <span class="badge__client"><img class="badge__client-img" [src]="url" alt="" /></span>
+  }
+  <span class="badge__tag" [style.background-color]="color()">
+    @if (logo(); as url) {
+      <span class="badge__logo"><img class="badge__logo-img" [src]="url" alt="" /></span>
+    } @else if (icon(); as i) {
+      <svg class="badge__icon" [lucideIcon]="i" aria-hidden="true"></svg>
+    } @else {
+      <span class="badge__initials" aria-hidden="true">{{ initials() }}</span>
+    }
+    @if (shortened()) {
+      <span class="badge__name" aria-hidden="true">{{ label() }}</span>
+      <span class="visually-hidden">{{ name() }}</span>
+    } @else {
+      <span class="badge__name">{{ label() }}</span>
+    }
+  </span>
+</span>

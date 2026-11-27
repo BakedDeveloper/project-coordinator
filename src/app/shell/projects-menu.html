@@ -35,12 +35,11 @@
                   ariaCurrentWhenActive="page"
                   (click)="close()"
                 >
-                  <span
-                    class="menu__tag"
-                    aria-hidden="true"
-                    [style.background-color]="color(project)"
-                  ></span>
-                  <span class="menu__name">{{ project.name }}</span>
+                  <app-project-badge
+                    [projectId]="project.id"
+                    [name]="project.name"
+                    [color]="color(project)"
+                  />
                 </a>
               </li>
             }

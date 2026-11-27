@@ -80,18 +80,23 @@ describe('ProjectsMenu', () => {
       'In pausa',
       'Chiusi',
     ]);
-    expect(links(element).map((a) => [a.textContent?.trim(), a.getAttribute('href')])).toEqual([
+    expect(
+      links(element).map((a) => [
+        a.querySelector('.badge__name')?.textContent,
+        a.getAttribute('href'),
+      ]),
+    ).toEqual([
       ['alfa', '/progetti/a'],
       ['Zeta', '/progetti/z'],
       ['Pausa', '/progetti/p'],
       ['Archivio', '/progetti/old'],
     ]);
     expect(links(element)[3].classList).toContain('menu__link--closed');
-    const tag = links(element)[1].querySelector<HTMLElement>('.menu__tag')!;
+    const tag = links(element)[1].querySelector<HTMLElement>('.badge__tag')!;
     expect(tag.style.backgroundColor).toBe('rgb(47, 95, 147)');
     // The fallback palette for a project without colour.
     expect(
-      links(element)[0].querySelector<HTMLElement>('.menu__tag')!.style.backgroundColor,
+      links(element)[0].querySelector<HTMLElement>('.badge__tag')!.style.backgroundColor,
     ).not.toBe('');
   });
 
@@ -103,7 +108,7 @@ describe('ProjectsMenu', () => {
     await stable();
 
     const current = links(element).filter((a) => a.getAttribute('aria-current') === 'page');
-    expect(current.map((a) => a.textContent?.trim())).toEqual(['Zeta']);
+    expect(current.map((a) => a.querySelector('.badge__name')?.textContent)).toEqual(['Zeta']);
   });
 
   it('closes with Escape and gives the focus back to the button', async () => {

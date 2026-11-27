@@ -74,7 +74,8 @@
         "test": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "buildTarget": "project-coordinator:build:development,test"
+            "buildTarget": "project-coordinator:build:development,test",
+            "providersFile": "src/testing/test-providers.ts"
           }
         },
         "lint": {

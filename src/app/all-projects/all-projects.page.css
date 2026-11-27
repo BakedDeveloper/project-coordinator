@@ -125,14 +125,6 @@
   cursor: pointer;
 }
 
-.project__tag {
-  padding: 0.125rem 0.5rem;
-  border-radius: 999px;
-  color: var(--color-on-project);
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
 .project__count {
   color: var(--color-text-secondary);
 }

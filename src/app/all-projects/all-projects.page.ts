@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 
 import { PrioritiesService, type PriorityTask } from '../data/priorities.service';
 import { CLOCK } from '../shared/clock';
+import { ProjectBadge } from '../shared/project-badge';
 import { SCOPE_FILTERS, groupByLevel, toIsoDate, type ScopeFilter } from './all-projects.model';
 import { TaskCard } from './task-card';
 
@@ -10,7 +11,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 /** View F of docs/viste.md: what to do now, across all projects. Read-only. */
 @Component({
   selector: 'app-all-projects-page',
-  imports: [TaskCard],
+  imports: [TaskCard, ProjectBadge],
   templateUrl: './all-projects.page.html',
   styleUrl: './all-projects.page.css',
 })

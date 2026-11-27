@@ -50,9 +50,11 @@
                   [attr.aria-controls]="'level3-' + project.projectId"
                   (click)="toggle(project.projectId)"
                 >
-                  <span class="project__tag" [style.background-color]="project.projectColor">
-                    {{ project.projectName }}
-                  </span>
+                  <app-project-badge
+                    [projectId]="project.projectId"
+                    [name]="project.projectName"
+                    [color]="project.projectColor"
+                  />
                   <span class="project__count">{{ project.tasks.length }} task</span>
                   <span class="project__chevron" aria-hidden="true">
                     {{ isExpanded(project.projectId) ? '▴' : '▾' }}

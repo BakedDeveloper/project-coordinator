@@ -1,0 +1,135 @@
+:host {
+  display: inline-flex;
+  max-width: 100%;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 100%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Client logo (work projects): on a white tile, logos are drawn for a white background. */
+.badge__client {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  padding: 0.1875rem 0.375rem;
+  border: 1px solid var(--color-border);
+  border-right: none;
+  border-radius: 999px 0 0 999px;
+  background: var(--color-logo-tile);
+}
+
+.badge__client-img {
+  display: block;
+  width: auto;
+  max-width: 4rem;
+  height: 0.875rem;
+  object-fit: contain;
+}
+
+.badge__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.125rem 0.5rem 0.125rem 0.25rem;
+  border-radius: 999px;
+  color: var(--color-on-project);
+}
+
+/* With a client logo, the two parts read as one pill. */
+.badge__client + .badge__tag {
+  border-radius: 0 999px 999px 0;
+}
+
+/* Project logo: a small logo tile inside the coloured part, so a coloured logo stays
+   visible on a dark project colour. */
+.badge__logo {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 0.25rem;
+  background: var(--color-logo-tile);
+}
+
+.badge__logo-img {
+  display: block;
+  max-width: 0.875rem;
+  max-height: 0.875rem;
+  object-fit: contain;
+}
+
+.badge__icon {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.badge__initials {
+  flex: none;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.badge__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badge--large {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.badge--large .badge__client {
+  padding: 0.375rem 0.75rem;
+}
+
+.badge--large .badge__client-img {
+  max-width: 8rem;
+  height: 1.5rem;
+}
+
+.badge--large .badge__tag {
+  gap: 0.5rem;
+  padding: 0.25rem 1rem 0.25rem 0.5rem;
+}
+
+.badge--large .badge__logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.375rem;
+}
+
+.badge--large .badge__logo-img {
+  max-width: 1.375rem;
+  max-height: 1.375rem;
+}
+
+.badge--large .badge__icon {
+  width: 1.375rem;
+  height: 1.375rem;
+}
+
+.badge--large .badge__initials {
+  font-size: 0.875rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

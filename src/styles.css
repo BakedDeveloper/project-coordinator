@@ -15,6 +15,9 @@
 
   /* Text on projects.color: project colours are dark in both themes. */
   --color-on-project: #ffffff;
+
+  /* Tile behind client and project logos: logos are drawn for a white background. */
+  --color-logo-tile: #ffffff;
 }
 
 :root,

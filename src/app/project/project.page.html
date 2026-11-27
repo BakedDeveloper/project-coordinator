@@ -18,7 +18,7 @@
     @if (project(); as p) {
       <div class="page-header">
         <h1 class="page-header__title">
-          <span class="project-tag" [style.background-color]="color()">{{ p.name }}</span>
+          <app-project-badge [projectId]="p.id" [name]="p.name" [color]="color()" [large]="true" />
         </h1>
         <p class="page-header__meta">{{ meta() }}</p>
       </div>
