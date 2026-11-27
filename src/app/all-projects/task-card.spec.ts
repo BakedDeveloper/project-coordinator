@@ -56,6 +56,18 @@ describe('TaskCard', () => {
     expect(
       element.querySelector<HTMLElement>('.card__project .badge__tag')!.style.backgroundColor,
     ).not.toBe('');
+    // The card wears the same fallback colour.
+    expect(
+      element.querySelector<HTMLElement>('.card')!.style.getPropertyValue('--project-color'),
+    ).not.toBe('');
+  });
+
+  it('wears the colour of its project, also on the project page without the tag', async () => {
+    const element = await render({ projectColor: '#2f5f93' }, '2026-11-24', false);
+
+    expect(
+      element.querySelector<HTMLElement>('.card')!.style.getPropertyValue('--project-color'),
+    ).toBe('#2f5f93');
   });
 
   it('hides the next action when there is none', async () => {

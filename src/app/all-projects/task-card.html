@@ -1,4 +1,4 @@
-<article class="card" [class.card--blocked]="task().isBlocked">
+<article class="card" [class.card--blocked]="task().isBlocked" [style.--project-color]="color()">
   <div class="card__rail">
     @if (done(); as d) {
       <p class="card__done">{{ d }}</p>
