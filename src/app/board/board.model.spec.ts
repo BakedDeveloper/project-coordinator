@@ -4,8 +4,11 @@ import {
   buildColumns,
   columnOf,
   doneSince,
+  moveTargets,
   projectBoardTasks,
   projectOptions,
+  withMove,
+  type BoardColumn,
   type BoardFilter,
   type ColumnKey,
 } from './board.model';
@@ -19,6 +22,12 @@ const ids = (filter: BoardFilter, tasks = TASKS) =>
   Object.fromEntries(
     buildColumns(tasks, filter, SINCE).map((c) => [c.key, c.tasks.map((t) => t.id)]),
   ) as Record<ColumnKey, string[]>;
+
+const columnIds = (columns: BoardColumn[]) =>
+  Object.fromEntries(columns.map((c) => [c.key, c.tasks.map((t) => t.id)])) as Record<
+    ColumnKey,
+    string[]
+  >;
 
 const TASKS = [
   boardTask({ id: 'todo-2', status: 'todo', priorityRank: 2 }),
@@ -129,5 +138,55 @@ describe('board model', () => {
       completedAt: '2026-11-24T16:00:00Z',
     });
     expect(tasks[0].completedAt).toBeNull();
+  });
+
+  it('moves a task to the other columns, never to Bloccato', () => {
+    expect(moveTargets(boardTask({ status: 'todo' }))).toEqual(['in_progress', 'done']);
+    expect(moveTargets(boardTask({ status: 'in_progress' }))).toEqual(['todo', 'done']);
+    expect(moveTargets(boardTask({ status: 'done', completedAt: NOW.toISOString() }))).toEqual([
+      'todo',
+      'in_progress',
+    ]);
+  });
+
+  it('moves a blocked task only to Fatto: elsewhere it would stay blocked', () => {
+    expect(moveTargets(boardTask({ status: 'in_progress', isBlocked: true }))).toEqual(['done']);
+  });
+
+  it('never moves a GitHub task', () => {
+    expect(moveTargets(boardTask({ fromGithub: true }))).toEqual([]);
+    expect(moveTargets(boardTask({ fromGithub: true, isBlocked: true }))).toEqual([]);
+  });
+
+  it('shows a moving task at the bottom of an open column, or at the top of Fatto', () => {
+    const columns = buildColumns(
+      [
+        boardTask({ id: 'a', priorityRank: 1 }),
+        boardTask({ id: 'b', priorityRank: 2, status: 'in_progress' }),
+        boardTask({
+          id: 'd',
+          status: 'done',
+          priorityRank: null,
+          completedAt: '2026-11-24T16:00:00Z',
+        }),
+      ],
+      ALL,
+      doneSince(NOW),
+    );
+
+    const toProgress = withMove(columns, 'a', 'in_progress', NOW);
+    expect(columnIds(toProgress)).toEqual({
+      todo: [],
+      in_progress: ['b', 'a'],
+      blocked: [],
+      done: ['d'],
+    });
+    expect(toProgress[1].tasks[1]).toMatchObject({ status: 'in_progress', completedAt: null });
+
+    const toDone = withMove(columns, 'b', 'done', NOW);
+    expect(columnIds(toDone).done).toEqual(['b', 'd']);
+    expect(toDone[3].tasks[0]).toMatchObject({ status: 'done', completedAt: NOW.toISOString() });
+
+    expect(withMove(columns, 'missing', 'done', NOW)).toEqual(columns);
   });
 });

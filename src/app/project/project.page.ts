@@ -30,7 +30,7 @@ const APP_NAME = 'Coordinatore';
 
 /**
  * One project (docs/viste.md): its board, and the Cronologia tab with the open tasks by date
- * (former view G). Read-only.
+ * (former view G).
  */
 @Component({
   selector: 'app-project-page',
@@ -107,6 +107,23 @@ export class ProjectPage {
 
   protected retry(): void {
     void this.load(this.id());
+  }
+
+  /** After a move: reads again without the loading message, so the board stays in place. */
+  protected async refresh(): Promise<void> {
+    const id = this.id();
+    const current = ++this.loadCount;
+    const now = this.clock();
+    try {
+      const detail = await this.projects.load(id, doneSince(now));
+      if (current === this.loadCount && detail !== null) {
+        this.detail.set(detail);
+        this.today.set(toIsoDate(now));
+        this.since.set(doneSince(now));
+      }
+    } catch {
+      // The move is saved; the board keeps the moved card until the next load.
+    }
   }
 
   protected shortDate(isoDate: string): string {

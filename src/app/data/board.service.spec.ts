@@ -25,6 +25,7 @@ function openRow(overrides: Record<string, unknown> = {}) {
     is_waiting: false,
     has_question_to_ask: false,
     waiting_on: null,
+    origin: 'coordinator',
     ...overrides,
   };
 }
@@ -67,7 +68,7 @@ describe('BoardService', () => {
   it('reads open tasks by priority_rank and recent done tasks of active projects', async () => {
     const { service, queries } = setup(
       { data: [openRow()], error: null },
-      { data: [doneRow()], error: null },
+      { data: [doneRow({ origin: 'github' })], error: null },
       COLORS,
     );
 
@@ -88,12 +89,14 @@ describe('BoardService', () => {
         status: 'in_progress',
         priorityRank: 1,
         projectColor: '#2f5f93',
+        fromGithub: false,
         completedAt: null,
       }),
       expect.objectContaining({
         id: 'd1',
         status: 'done',
         priorityRank: null,
+        fromGithub: true,
         completedAt: '2026-11-24T16:00:00+00:00',
       }),
     ]);

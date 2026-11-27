@@ -30,6 +30,8 @@ Le board hanno quattro colonne, sempre in quest'ordine:
 
 - Si cambia stato trascinando una card fra Da fare, In corso e Fatto (`@angular/cdk`), oppure con il bottone **"Sposta in…"** della card, che funziona da tastiera e su telefono.
 - **Bloccato non si raggiunge trascinando**: un blocco ha bisogno di sapere da cosa dipende (`blocks`). Si blocca e si sblocca dal pannello di dettaglio.
+- Un task bloccato si sposta solo in Fatto: in Da fare o In corso resterebbe comunque in Bloccato.
+- Se il salvataggio non riesce, la card torna al suo posto e un messaggio lo dice.
 - I task **di origine GitHub** (`origin = 'github'`, oggi Nutrirea) non si spostano: stato e titolo li decide GitHub. La card mostra un lucchetto e lo spiega.
 - Dopo uno spostamento l'ordine torna a essere quello di `priority_rank`, riletto dal database.
 

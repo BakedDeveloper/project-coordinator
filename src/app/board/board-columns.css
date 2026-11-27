@@ -107,3 +107,120 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+.column__drop {
+  min-height: 3rem;
+}
+
+/* Move ------------------------------------------------------------------- */
+
+.move-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-status-blocked);
+  border-radius: 0.5rem;
+  color: var(--color-status-blocked);
+  background: var(--color-error-surface);
+  font-weight: 600;
+}
+
+.move-error__text {
+  margin: 0;
+}
+
+.move-error__close,
+.move__trigger,
+.move__target {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.item {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.item:not(.cdk-drag-disabled) app-task-card {
+  cursor: grab;
+}
+
+.move {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.move__trigger {
+  border-color: var(--color-border);
+  font-size: 0.875rem;
+}
+
+.move__menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.move__target {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: 0.875rem;
+}
+
+.move__locked,
+.move__pending {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.move__lock {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+/* Dragging: the placeholder marks where the card was, the preview follows the pointer. */
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 0.5rem 1.5rem var(--color-shadow);
+  border-radius: 0.75rem;
+}
+
+.cdk-drop-list-receiving {
+  outline: 2px dashed var(--column-color);
+  outline-offset: 0.25rem;
+  border-radius: 0.5rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

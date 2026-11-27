@@ -45,7 +45,12 @@
       </nav>
 
       @if (tab() === 'board') {
-        <app-board-columns [columns]="boardColumns()" [today]="today()" [showProject]="false" />
+        <app-board-columns
+          [columns]="boardColumns()"
+          [today]="today()"
+          [showProject]="false"
+          (moved)="refresh()"
+        />
       } @else {
         @if (hasPlan()) {
           <p class="notice">

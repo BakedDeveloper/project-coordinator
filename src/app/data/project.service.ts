@@ -34,6 +34,8 @@ export interface ProjectTask {
   isWaiting: boolean;
   hasQuestionToAsk: boolean;
   waitingOn: string | null;
+  /** `origin = 'github'`: GitHub decides title and open/closed, the app does not move it. */
+  fromGithub: boolean;
   createdAt: string;
   /** From `v_priorities`: null when the project is not active (no priorities). */
   priorityRank: number | null;
@@ -82,9 +84,9 @@ export class ProjectUnavailableError extends Error {
 // Literal strings: supabase-js derives the row types from them.
 const PROJECT_COLUMNS = 'id, name, scope, status, color, weekly_hours';
 const TASK_COLUMNS =
-  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, created_at';
+  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at';
 const DONE_TASK_COLUMNS =
-  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, created_at, completed_at';
+  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at, completed_at';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -182,6 +184,7 @@ export class ProjectService {
         isWaiting: row.is_waiting ?? false,
         hasQuestionToAsk: row.has_question_to_ask ?? false,
         waitingOn: row.waiting_on,
+        fromGithub: row.origin === 'github',
         createdAt: row.created_at ?? '',
         priorityRank: ranks.get(row.id) ?? null,
       });
@@ -207,6 +210,7 @@ export class ProjectService {
         isWaiting: row.is_waiting ?? false,
         hasQuestionToAsk: row.has_question_to_ask ?? false,
         waitingOn: row.waiting_on,
+        fromGithub: row.origin === 'github',
         createdAt: row.created_at ?? '',
         completedAt: row.completed_at,
       });
