@@ -324,7 +324,9 @@ describe('ProjectPage', () => {
         { text: 'Cronologia', href: '/progetti/p1?vista=cronologia', current: null },
       ]);
       const column = (key: string) =>
-        Array.from(element.querySelectorAll(`[data-column="${key}"] h3`)).map((h) => h.textContent);
+        Array.from(element.querySelectorAll(`[data-column="${key}"] .card__title`)).map((h) =>
+          h.textContent?.trim(),
+        );
       expect(column('todo')).toEqual(['Da iniziare']);
       expect(column('blocked')).toEqual(['Bloccato']);
       expect(element.querySelector('.card__project')).toBeNull();
@@ -344,8 +346,8 @@ describe('ProjectPage', () => {
       );
 
       const done = element.querySelector('[data-column="done"]')!;
-      expect(text(done.querySelector('h3'))).toBe('Finito');
-      expect(text(done.querySelector('.card__done'))).toBe('fatto il 24 nov');
+      expect(text(done.querySelector('.card__title'))).toBe('Finito');
+      expect(text(done.querySelector('.card__date'))).toBe('fatto il 24 nov');
     });
 
     it('switches to Cronologia from the address without reloading the project', async () => {

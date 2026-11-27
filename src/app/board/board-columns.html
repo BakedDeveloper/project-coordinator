@@ -87,61 +87,13 @@
                     [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
                     cdkDragPreviewContainer="parent"
                   >
-                    <app-task-card
+                    <app-board-card
                       [task]="task"
                       [today]="today()"
                       [showProject]="showProject()"
-                      [doneAt]="task.completedAt"
+                      [busy]="isPending(task)"
+                      (opened)="openDetail(task, $event)"
                     />
-
-                    @if (task.fromGithub) {
-                      <p class="move__locked">
-                        <svg class="move__lock" lucideLock aria-hidden="true"></svg>
-                        Lo stato lo decide GitHub: chiudi o riapri la issue.
-                      </p>
-                    } @else if (isPending(task)) {
-                      <p class="move__pending" role="status">Salvo…</p>
-                    } @else if (targets(task); as targetList) {
-                      @if (targetList.length > 0) {
-                        <div class="move">
-                          <button
-                            #trigger
-                            type="button"
-                            class="move__trigger"
-                            [attr.aria-expanded]="menuFor() === task.id"
-                            [attr.aria-controls]="'move-' + task.id"
-                            (click)="toggleMenu(task)"
-                            (keydown.escape)="closeMenu(trigger)"
-                          >
-                            Sposta in…<span class="visually-hidden"> {{ task.title }}</span>
-                          </button>
-                          <button
-                            #deleteTrigger
-                            type="button"
-                            class="move__delete"
-                            (click)="askDelete(task, deleteTrigger)"
-                          >
-                            Elimina<span class="visually-hidden"> {{ task.title }}</span>
-                          </button>
-                          @if (menuFor() === task.id) {
-                            <ul class="move__menu" [id]="'move-' + task.id">
-                              @for (target of targetList; track target.key) {
-                                <li>
-                                  <button
-                                    type="button"
-                                    class="move__target"
-                                    (click)="chooseTarget(task, target.key)"
-                                    (keydown.escape)="closeMenu(trigger)"
-                                  >
-                                    {{ target.label }}
-                                  </button>
-                                </li>
-                              }
-                            </ul>
-                          }
-                        </div>
-                      }
-                    }
                   </li>
                 }
               </ol>
@@ -158,6 +110,14 @@
     </section>
   }
 </div>
+
+<app-task-detail-dialog
+  [task]="detailTask()"
+  (saved)="moved.emit()"
+  (moveTo)="moveFromDetail($event.task, $event.to)"
+  (deleteAsked)="deleteFromDetail($event)"
+  (closed)="detailClosed()"
+/>
 
 <app-delete-dialog
   [task]="toDelete()"

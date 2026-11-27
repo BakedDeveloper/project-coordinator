@@ -1,0 +1,44 @@
+<button
+  #card
+  type="button"
+  class="card"
+  [class.card--blocked]="task().isBlocked"
+  [class.card--no-project]="!showProject()"
+  [style.--project-color]="color()"
+  (click)="opened.emit(card)"
+>
+  @if (showProject()) {
+    <span class="card__project">
+      <app-project-badge
+        [projectId]="task().projectId"
+        [name]="task().projectName"
+        [color]="color()"
+      />
+    </span>
+  }
+  <span class="card__title">{{ task().title }}</span>
+  <span class="card__foot">
+    @if (busy()) {
+      <span class="card__date">Salvo…</span>
+    } @else if (date(); as d) {
+      <span class="card__date" [class.card__date--overdue]="d.overdue">{{ d.text }}</span>
+    }
+    <span class="card__signals">
+      @if (task().blocksOthers) {
+        <svg lucideKeyRound class="signal" aria-hidden="true"></svg>
+        <span class="visually-hidden">Sblocca altri.</span>
+      }
+      @if (task().hasQuestionToAsk) {
+        <svg lucideMessageCircleQuestionMark class="signal" aria-hidden="true"></svg>
+        <span class="visually-hidden">Domanda da fare.</span>
+      } @else if (task().isWaiting) {
+        <svg lucideHourglass class="signal" aria-hidden="true"></svg>
+        <span class="visually-hidden">Aspetta qualcuno.</span>
+      }
+      @if (task().isBlocked) {
+        <svg lucideLock class="signal signal--blocked" aria-hidden="true"></svg>
+        <span class="visually-hidden">Bloccato.</span>
+      }
+    </span>
+  </span>
+</button>

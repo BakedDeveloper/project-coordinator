@@ -18,13 +18,13 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { LucideLock } from '@lucide/angular';
 
-import { TaskCard } from '../all-projects/task-card';
+import { BoardCard } from './board-card';
 import { ColumnsMenu } from './columns-menu';
 import { DeleteDialog } from './delete-dialog';
 import { PausedProjectEntry } from './paused-project';
 import { ProjectGroup } from './project-group';
+import { TaskDetailDialog } from './task-detail-dialog';
 import type { BoardTask, PausedProject } from '../data/board.service';
 import { ProjectService } from '../data/project.service';
 import { PreferencesService } from '../data/preferences.service';
@@ -50,8 +50,6 @@ interface Section {
   tasks: BoardTask[];
 }
 
-const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
-
 /**
  * The board columns (docs/viste.md, "Colonne"), shared by the shared board and the
  * project board. On a phone only one column shows, chosen with the column tabs. The
@@ -63,11 +61,11 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
 @Component({
   selector: 'app-board-columns',
   imports: [
-    TaskCard,
+    BoardCard,
+    TaskDetailDialog,
     CdkDropListGroup,
     CdkDropList,
     CdkDrag,
-    LucideLock,
     DeleteDialog,
     PausedProjectEntry,
     ColumnsMenu,
@@ -110,8 +108,10 @@ export class BoardColumns {
     const visible = this.visible();
     return visible.includes(this.current()) ? this.current() : (visible[0] ?? 'todo');
   });
-  /** The task whose "Sposta in…" menu is open. */
-  protected readonly menuFor = signal<string | null>(null);
+  /** The task in the detail popup. */
+  protected readonly detailTask = signal<BoardTask | null>(null);
+  private readonly detailDialog = viewChild.required(TaskDetailDialog);
+  private detailReturnFocus: HTMLElement | null = null;
   /** Tasks being written, shown already moved. Reset when the page gives new columns. */
   private readonly pending = linkedSignal<BoardColumn[], ReadonlyMap<string, TargetColumn>>({
     source: this.columns,
@@ -236,19 +236,12 @@ export class BoardColumns {
     () => this.shown().find((c) => c.key === 'todo')?.tasks[0] ?? null,
   );
 
-  protected targets(task: BoardTask): { key: TargetColumn; label: string }[] {
-    if (this.pending().has(task.id)) {
-      return [];
-    }
-    return moveTargets(task).map((key) => ({ key, label: LABELS.get(key) ?? key }));
-  }
-
   protected isPending(task: BoardTask): boolean {
     return this.pending().has(task.id);
   }
 
   protected canDrag(task: BoardTask): boolean {
-    return this.targets(task).length > 0;
+    return !this.isPending(task) && moveTargets(task).length > 0;
   }
 
   /** A card may enter its own column (to go back) or one of its targets. */
@@ -263,22 +256,35 @@ export class BoardColumns {
     void this.move(event.item.data, to);
   }
 
-  protected toggleMenu(task: BoardTask): void {
-    this.menuFor.update((id) => (id === task.id ? null : task.id));
+  protected openDetail(task: BoardTask, card: HTMLElement): void {
+    this.detailReturnFocus = card;
+    this.detailTask.set(task);
+    afterNextRender(() => this.detailDialog().open(), { injector: this.injector });
   }
 
-  protected closeMenu(trigger: HTMLButtonElement): void {
-    this.menuFor.set(null);
-    trigger.focus();
+  /** The popup closed: back to the card that opened it, if it is still there. */
+  protected detailClosed(): void {
+    this.detailTask.set(null);
+    if (this.detailReturnFocus?.isConnected) {
+      this.detailReturnFocus.focus();
+    }
+    this.detailReturnFocus = null;
   }
 
-  protected chooseTarget(task: BoardTask, to: TargetColumn): void {
-    this.menuFor.set(null);
+  protected moveFromDetail(task: BoardTask, to: TargetColumn): void {
+    this.detailDialog().close();
     void this.move(task, to);
   }
 
+  protected deleteFromDetail(task: BoardTask): void {
+    const card = this.detailReturnFocus;
+    this.detailDialog().close();
+    if (card) {
+      this.askDelete(task, card);
+    }
+  }
+
   protected askDelete(task: BoardTask, trigger: HTMLElement): void {
-    this.menuFor.set(null);
     this.deleteReturnFocus = trigger;
     this.deleteError.set(null);
     this.hasHours.set(false);

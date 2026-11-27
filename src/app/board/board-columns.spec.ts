@@ -6,6 +6,7 @@ import type { BoardTask } from '../data/board.service';
 import { PreferencesService, type BoardColumnKey } from '../data/preferences.service';
 import { ProjectService } from '../data/project.service';
 import { TaskHasHoursError, TaskService } from '../data/task.service';
+import { TaskDetailService, type TaskDetail } from '../data/task-detail.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
 import { buildColumns, doneSince } from './board.model';
@@ -44,6 +45,15 @@ async function render(
         },
       },
       { provide: ProjectService, useValue: { setStatus: setProjectStatus } },
+      {
+        provide: TaskDetailService,
+        useValue: {
+          load: (id: string) => {
+            const task = tasks.find((x) => x.id === id);
+            return Promise.resolve(task ? detailOf(task) : null);
+          },
+        },
+      },
       { provide: CLOCK, useValue: () => NOW },
     ],
   }).compileComponents();
@@ -59,6 +69,57 @@ async function render(
   const element = fixture.nativeElement as HTMLElement;
   document.body.appendChild(element);
   return { fixture, element, setStatus, moved, preferences, remove, setProjectStatus };
+}
+
+/** The details the popup reads, made from the card. */
+function detailOf(task: BoardTask): TaskDetail {
+  return {
+    id: task.id,
+    title: task.title,
+    status: task.status,
+    projectId: task.projectId,
+    projectName: task.projectName,
+    fromGithub: task.fromGithub,
+    nextAction: task.nextAction,
+    description: null,
+    impact: 'medium',
+    dueDate: null,
+    effectiveDueDate: task.effectiveDueDate,
+    checkpointName: task.checkpointName,
+    blockedBy: [],
+    blocks: [],
+    waiting: [],
+    hours: 0,
+  };
+}
+
+/** Clicks the card with that title and waits for its popup to read the details. */
+async function openCard(
+  fixture: { whenStable: () => Promise<unknown> },
+  element: HTMLElement,
+  title: string,
+): Promise<HTMLButtonElement> {
+  const card = [...element.querySelectorAll<HTMLButtonElement>('button.card')].find(
+    (b) => b.querySelector('.card__title')?.textContent?.trim() === title,
+  );
+  if (!card) {
+    throw new Error(`No card "${title}"`);
+  }
+  card.click();
+  await fixture.whenStable();
+  await fixture.whenStable();
+  return card;
+}
+
+/** A button of the move and delete row of the open popup. */
+function detailButton(element: HTMLElement, label: string): HTMLButtonElement {
+  const found = [...element.querySelectorAll<HTMLButtonElement>('.detail__move button')].find(
+    (b) => (b.textContent ?? '').trim() === label,
+  );
+  if (!found) {
+    throw new Error(`No popup button "${label}"`);
+  }
+  return found;
 }
 
 function shownColumns(element: HTMLElement): string[] {
@@ -93,17 +154,6 @@ function button(element: HTMLElement, text: string): HTMLButtonElement {
   return found;
 }
 
-/** An entry of the open "Sposta in…" menu. */
-function target(element: HTMLElement, label: string): HTMLButtonElement {
-  const found = [...element.querySelectorAll<HTMLButtonElement>('.move__target')].find(
-    (b) => (b.textContent ?? '').trim() === label,
-  );
-  if (!found) {
-    throw new Error(`No menu entry "${label}"`);
-  }
-  return found;
-}
-
 describe('BoardColumns', () => {
   afterEach(() => document.body.querySelectorAll('app-board-columns').forEach((e) => e.remove()));
 
@@ -112,14 +162,15 @@ describe('BoardColumns', () => {
       boardTask({ id: 't1', title: 'Creato per sbaglio' }),
     ]);
 
-    button(element, 'Elimina').click();
+    await openCard(fixture, element, 'Creato per sbaglio');
+    detailButton(element, 'Elimina').click();
     await fixture.whenStable();
-    const dialog = element.querySelector('dialog')!;
+    const dialog = element.querySelector('app-delete-dialog dialog')!;
     expect(dialog.hasAttribute('open')).toBe(true);
     expect(dialog.textContent).toContain('«Creato per sbaglio» sparisce per sempre');
     expect(remove).not.toHaveBeenCalled();
 
-    button(dialog, 'Elimina per sempre').click();
+    button(dialog as HTMLElement, 'Elimina per sempre').click();
     await fixture.whenStable();
 
     expect(remove).toHaveBeenCalledWith('t1');
@@ -136,9 +187,10 @@ describe('BoardColumns', () => {
       vi.fn(() => Promise.reject(new TaskHasHoursError())),
     );
 
-    button(element, 'Elimina').click();
+    await openCard(fixture, element, 'Con ore');
+    detailButton(element, 'Elimina').click();
     await fixture.whenStable();
-    const dialog = element.querySelector('dialog')!;
+    const dialog = element.querySelector<HTMLElement>('app-delete-dialog dialog')!;
     button(dialog, 'Elimina per sempre').click();
     await fixture.whenStable();
 
@@ -150,18 +202,19 @@ describe('BoardColumns', () => {
     expect(setStatus).toHaveBeenCalledWith('t1', 'cancelled');
   });
 
-  it('closes the confirmation with Annulla and gives the focus back', async () => {
-    const { fixture, element, remove } = await render([boardTask({ id: 't1' })]);
+  it('closes the confirmation with Annulla and gives the focus back to the card', async () => {
+    const { fixture, element, remove } = await render([boardTask({ id: 't1', title: 'Uno' })]);
 
-    const trigger = button(element, 'Elimina');
-    trigger.click();
+    const card = await openCard(fixture, element, 'Uno');
+    detailButton(element, 'Elimina').click();
     await fixture.whenStable();
-    button(element.querySelector('dialog')!, 'Annulla').click();
+    const dialog = element.querySelector<HTMLElement>('app-delete-dialog dialog')!;
+    button(dialog, 'Annulla').click();
     await fixture.whenStable();
 
-    expect(element.querySelector('dialog')!.hasAttribute('open')).toBe(false);
+    expect(dialog.hasAttribute('open')).toBe(false);
     expect(remove).not.toHaveBeenCalled();
-    expect(document.activeElement).toBe(trigger);
+    expect(document.activeElement).toBe(card);
   });
 
   it('shows a suspended project at the top of Sospeso and resumes it', async () => {
@@ -282,29 +335,31 @@ describe('BoardColumns', () => {
     expect(element.querySelector('.group')).toBeNull();
   });
 
-  it('offers no delete for a GitHub task', async () => {
-    const { element } = await render([boardTask({ id: 'g1', fromGithub: true })]);
+  it('offers no move and no delete for a GitHub task, and says why', async () => {
+    const { fixture, element } = await render([
+      boardTask({ id: 'g1', title: 'Da GitHub', fromGithub: true }),
+    ]);
 
-    expect(element.querySelector('.move__delete')).toBeNull();
+    expect(element.querySelector('.item')!.classList).toContain('cdk-drag-disabled');
+    await openCard(fixture, element, 'Da GitHub');
+    expect(element.querySelector('.detail__move')).toBeNull();
+    expect(element.querySelector('.field__hint')?.textContent).toContain('GitHub');
+    expect(element.querySelector<HTMLInputElement>('.detail input')!.readOnly).toBe(true);
   });
 
-  it('moves a card with the "Sposta in…" menu and tells the page', async () => {
+  it('moves a card from its popup and tells the page', async () => {
     const { fixture, element, setStatus, moved } = await render([
       boardTask({ id: 't1', title: 'Preventivo' }),
     ]);
 
-    const trigger = button(element, 'Sposta in…');
-    expect(trigger.getAttribute('aria-expanded')).toBe('false');
-    trigger.click();
-    await fixture.whenStable();
-    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    await openCard(fixture, element, 'Preventivo');
     // Bloccato is never offered, nor the column the card is in.
-    const targets = [...element.querySelectorAll('.move__target')].map((b) =>
+    const targets = [...element.querySelectorAll('.detail__move button')].map((b) =>
       b.textContent?.trim(),
     );
-    expect(targets).toEqual(['In corso', 'Sospeso', 'Fatto', 'Annullato']);
+    expect(targets).toEqual(['In corso', 'Sospeso', 'Fatto', 'Annullato', 'Elimina']);
 
-    target(element, 'In corso').click();
+    detailButton(element, 'In corso').click();
     await fixture.whenStable();
 
     expect(setStatus).toHaveBeenCalledWith('t1', 'in_progress');
@@ -318,9 +373,8 @@ describe('BoardColumns', () => {
       boardTask({ id: 't1', title: 'Preventivo' }),
     ]);
 
-    button(element, 'Sposta in…').click();
-    await fixture.whenStable();
-    target(element, 'Sospeso').click();
+    await openCard(fixture, element, 'Preventivo');
+    detailButton(element, 'Sospeso').click();
     await fixture.whenStable();
 
     expect(setStatus).toHaveBeenCalledWith('t1', 'on_hold');
@@ -386,27 +440,17 @@ describe('BoardColumns', () => {
     );
   });
 
-  it('closes the menu with Escape and gives the focus back to its button', async () => {
-    const { fixture, element } = await render([boardTask({ id: 't1' })]);
+  it('closes the popup and gives the focus back to the card', async () => {
+    const { fixture, element } = await render([boardTask({ id: 't1', title: 'Uno' })]);
 
-    const trigger = button(element, 'Sposta in…');
-    trigger.click();
-    await fixture.whenStable();
-    element
-      .querySelector('.move__target')!
-      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    const card = await openCard(fixture, element, 'Uno');
+    const popup = element.querySelector('app-task-detail-dialog dialog')!;
+    expect(popup.hasAttribute('open')).toBe(true);
+    button(popup as HTMLElement, 'Chiudi').click();
     await fixture.whenStable();
 
-    expect(element.querySelector('.move__menu')).toBeNull();
-    expect(document.activeElement).toBe(trigger);
-  });
-
-  it('cannot move a GitHub task: no menu, no drag, and says why', async () => {
-    const { element } = await render([boardTask({ id: 'g1', fromGithub: true })]);
-
-    expect(element.querySelector('.move__trigger')).toBeNull();
-    expect(element.querySelector('.item')!.classList).toContain('cdk-drag-disabled');
-    expect(element.querySelector('.move__locked')?.textContent).toContain('GitHub');
+    expect(popup.hasAttribute('open')).toBe(false);
+    expect(document.activeElement).toBe(card);
   });
 
   it('puts the card back and shows a message when the write fails', async () => {
@@ -415,14 +459,13 @@ describe('BoardColumns', () => {
       vi.fn(() => Promise.reject(new Error('offline'))),
     );
 
-    button(element, 'Sposta in…').click();
-    await fixture.whenStable();
-    target(element, 'Fatto').click();
+    await openCard(fixture, element, 'Preventivo');
+    detailButton(element, 'In corso').click();
     await fixture.whenStable();
 
     expect(column(element, 'todo')).toEqual(['Preventivo']);
-    expect(column(element, 'done')).toEqual([]);
-    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+    expect(column(element, 'in_progress')).toEqual([]);
+    expect(element.querySelector('.move-error')?.textContent).toContain(
       'Non sono riuscito a spostare «Preventivo»',
     );
     expect(moved).not.toHaveBeenCalled();
@@ -435,13 +478,12 @@ describe('BoardColumns', () => {
       vi.fn(() => new Promise<void>((resolve) => (finish = resolve))),
     );
 
-    button(element, 'Sposta in…').click();
-    await fixture.whenStable();
-    target(element, 'In corso').click();
+    await openCard(fixture, element, 'Preventivo');
+    detailButton(element, 'In corso').click();
     fixture.detectChanges();
 
     expect(column(element, 'in_progress')).toEqual(['Preventivo']);
-    expect(element.querySelector('.move__pending')?.textContent).toContain('Salvo');
+    expect(element.querySelector('.card__date')?.textContent).toContain('Salvo');
     finish();
     await fixture.whenStable();
   });

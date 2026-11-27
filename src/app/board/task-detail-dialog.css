@@ -1,0 +1,134 @@
+/* On a solid surface, so text keeps its contrast over any background. Full screen on a phone. */
+.detail {
+  width: min(40rem, 100vw);
+  max-height: 100dvh;
+  margin: auto;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.detail::backdrop {
+  background: var(--color-shadow);
+}
+
+.detail__head,
+.detail__actions,
+.detail__move {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail__head {
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.detail__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.detail__form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.detail__row {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.field__label {
+  font-weight: 600;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-text-secondary);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.field__hint,
+.detail__facts dt {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.detail__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+}
+
+.detail__facts dd {
+  margin: 0;
+}
+
+.detail__error {
+  margin: 0;
+  color: var(--color-status-blocked);
+  font-weight: 600;
+}
+
+.detail__move {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-divider);
+}
+
+.detail__close,
+.button {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button--primary {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.button--danger {
+  margin-left: auto;
+  border-color: var(--color-status-blocked);
+  background: var(--color-error-surface);
+  color: var(--color-status-blocked);
+}
+
+@media (max-width: 39.99rem) {
+  .detail {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 40rem) {
+  .detail__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

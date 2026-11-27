@@ -1,0 +1,137 @@
+<dialog #dialog class="detail" aria-labelledby="detail-title" (close)="closed.emit()">
+  @if (task(); as t) {
+    <div class="detail__head">
+      <h2 class="detail__title" id="detail-title">{{ t.projectName }}</h2>
+      <button type="button" class="detail__close" (click)="close()">Chiudi</button>
+    </div>
+
+    @switch (state()) {
+      @case ('loading') {
+        <p role="status">Carico i dettagli…</p>
+      }
+      @case ('error') {
+        <p class="detail__error" role="alert">Non riesco a leggere i dettagli del task.</p>
+      }
+      @default {
+        @if (detail(); as d) {
+          <form class="detail__form" novalidate (submit)="save($event)">
+            <label class="field">
+              <span class="field__label">Titolo</span>
+              <input
+                class="field__input"
+                type="text"
+                maxlength="300"
+                autofocus
+                [value]="title()"
+                [readOnly]="d.fromGithub"
+                [attr.aria-describedby]="d.fromGithub ? 'detail-github' : null"
+                (input)="title.set(value($event))"
+              />
+            </label>
+            @if (d.fromGithub) {
+              <p class="field__hint" id="detail-github">
+                Il titolo e lo stato li decide GitHub: cambiali nella issue.
+              </p>
+            }
+
+            <label class="field">
+              <span class="field__label">Prossima azione</span>
+              <input
+                class="field__input"
+                type="text"
+                maxlength="500"
+                [value]="nextAction()"
+                (input)="nextAction.set(value($event))"
+              />
+            </label>
+
+            <label class="field">
+              <span class="field__label">Descrizione</span>
+              <textarea
+                class="field__input"
+                rows="4"
+                [value]="description()"
+                (input)="description.set(value($event))"
+              ></textarea>
+            </label>
+
+            <div class="detail__row">
+              <label class="field">
+                <span class="field__label">Scadenza</span>
+                <input
+                  class="field__input"
+                  type="date"
+                  [value]="dueDate()"
+                  (input)="dueDate.set(value($event))"
+                />
+              </label>
+              <label class="field">
+                <span class="field__label">Importanza</span>
+                <select class="field__input" (change)="impact.set($any(value($event)))">
+                  @for (i of impacts; track i.value) {
+                    <option [value]="i.value" [selected]="impact() === i.value">
+                      {{ i.label }}
+                    </option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <dl class="detail__facts">
+              <dt>Stato</dt>
+              <dd>{{ statusLabel(d.status) }}</dd>
+              @if (d.checkpointName; as checkpoint) {
+                <dt>Checkpoint</dt>
+                <dd>
+                  {{ checkpoint
+                  }}{{ d.effectiveDueDate ? ' · ' + shortDate(d.effectiveDueDate) : '' }}
+                </dd>
+              }
+              @if (d.blockedBy.length > 0) {
+                <dt>Aspetta il task</dt>
+                <dd>{{ d.blockedBy.join(', ') }}</dd>
+              }
+              @if (d.blocks.length > 0) {
+                <dt>Blocca</dt>
+                <dd>{{ d.blocks.join(', ') }}</dd>
+              }
+              @for (w of d.waiting; track $index) {
+                <dt>{{ w.asked ? 'Aspetta ' + w.person : 'Domanda da fare a ' + w.person }}</dt>
+                <dd>{{ w.description }}</dd>
+              }
+              <dt>Ore registrate</dt>
+              <dd>{{ d.hours }}</dd>
+            </dl>
+
+            @if (error(); as message) {
+              <p class="detail__error" role="alert">{{ message }}</p>
+            }
+            <div class="detail__actions">
+              <button type="submit" class="button button--primary" [disabled]="saving()">
+                {{ saving() ? 'Salvo…' : 'Salva' }}
+              </button>
+            </div>
+          </form>
+
+          @if (targets().length > 0) {
+            <div class="detail__move" role="group" aria-labelledby="detail-move">
+              <span class="field__label" id="detail-move">Sposta in</span>
+              @for (target of targets(); track target.key) {
+                <button
+                  type="button"
+                  class="button"
+                  (click)="moveTo.emit({ task: t, to: target.key })"
+                >
+                  {{ target.label }}
+                </button>
+              }
+              <button type="button" class="button button--danger" (click)="deleteAsked.emit(t)">
+                Elimina
+              </button>
+            </div>
+          }
+        }
+      }
+    }
+  }
+</dialog>

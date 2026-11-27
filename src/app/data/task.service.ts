@@ -21,6 +21,16 @@ export interface NewTask {
   dueDate: string | null;
 }
 
+/** The fields the detail popup edits. Only the ones present are written. */
+export interface TaskEdit {
+  title?: string;
+  nextAction?: string | null;
+  description?: string | null;
+  /** ISO date (`YYYY-MM-DD`) or null. */
+  dueDate?: string | null;
+  impact?: TaskImpact;
+}
+
 /** Raised when a task cannot be updated. It carries no database data. */
 export class TaskUpdateError extends Error {
   constructor() {
@@ -72,6 +82,54 @@ export class TaskService {
       .update({ status })
       .eq('id', id)
       .neq('origin', 'github')
+      .select('id')
+      .then(
+        (r) => r,
+        () => null,
+      );
+    if (result === null || result.error || result.data.length !== 1) {
+      throw new TaskUpdateError();
+    }
+  }
+
+  /**
+   * Writes the edited fields of a task, and only those. The title of a GitHub task is
+   * GitHub's (CLAUDE.md, rule 8): it is never sent. Fails when no task was changed.
+   */
+  async update(id: string, edit: TaskEdit, fromGithub: boolean): Promise<void> {
+    const changes: {
+      title?: string;
+      next_action?: string | null;
+      description?: string | null;
+      due_date?: string | null;
+      impact?: TaskImpact;
+    } = {};
+    if (edit.title !== undefined && !fromGithub) {
+      const title = edit.title.trim();
+      if (title === '') {
+        throw new TaskUpdateError();
+      }
+      changes.title = title;
+    }
+    if (edit.nextAction !== undefined) {
+      changes.next_action = emptyToNull(edit.nextAction);
+    }
+    if (edit.description !== undefined) {
+      changes.description = emptyToNull(edit.description);
+    }
+    if (edit.dueDate !== undefined) {
+      changes.due_date = edit.dueDate === '' ? null : edit.dueDate;
+    }
+    if (edit.impact !== undefined) {
+      changes.impact = edit.impact;
+    }
+    if (Object.keys(changes).length === 0) {
+      return;
+    }
+    const result = await this.supabase
+      .from('tasks')
+      .update(changes)
+      .eq('id', id)
       .select('id')
       .then(
         (r) => r,

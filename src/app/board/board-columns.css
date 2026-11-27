@@ -174,10 +174,7 @@
   margin: 0;
 }
 
-.move-error__close,
-.move__trigger,
-.move__target,
-.move__delete {
+.move-error__close {
   min-height: 2.5rem;
   padding: 0.25rem 0.75rem;
   border: 1px solid currentColor;
@@ -189,57 +186,8 @@
   cursor: pointer;
 }
 
-.item {
-  display: grid;
-  gap: 0.375rem;
-}
-
-.item:not(.cdk-drag-disabled) app-task-card {
+.item:not(.cdk-drag-disabled) {
   cursor: grab;
-}
-
-.move {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-.move__trigger {
-  border-color: var(--color-border);
-  font-size: 0.875rem;
-}
-
-.move__menu {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.move__target {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  font-size: 0.875rem;
-}
-
-.move__locked,
-.move__pending {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.8125rem;
-}
-
-.move__lock {
-  flex: none;
-  width: 0.875rem;
-  height: 0.875rem;
 }
 
 /* Dragging: the placeholder marks where the card was, the preview follows the pointer. */

@@ -68,10 +68,17 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 
 ### Scheda di un task
 
-- Titolo, prossima azione e le etichette "sblocca altri" (`blocks_others`), "domanda da fare" (`has_question_to_ask`, con chi: `waiting_on`), "aspetta X" e "bloccato". I task bloccati hanno il bordo tratteggiato.
-- A sinistra il binario con la scadenza effettiva ("scade 24 nov"; se è passata, in rosso: "scaduto il 24 nov") e, se c'è, il nome del checkpoint.
-- Nella board condivisa la card porta l'**etichetta del progetto**, con la sua icona, nel colore `projects.color` e testo bianco. Nella board di un progetto l'etichetta non serve.
-- Cliccando una card si apre un **pannello di dettaglio** a destra, senza lasciare la board: prima in sola lettura, poi con le modifiche a mano.
+- Sulla board la scheda è **compatta** e tutte hanno la stessa altezza (issue #57): badge del progetto (solo sulla board condivisa), titolo su due righe al massimo, data ("scade 24 nov", in rosso "scaduto il 24 nov"; in Fatto "fatto il 24 nov") e piccole icone per "sblocca altri", "aspetta qualcuno", "domanda da fare" e "bloccato", con il testo per i lettori di schermo.
+- La scheda ha una striscia del colore del progetto a sinistra e una sua tinta chiara (al massimo 10%, issue #54). I task bloccati hanno il bordo tratteggiato.
+- Tutta la scheda è un bottone: apre il **popup di dettaglio**. Il trascinamento resta sulla scheda.
+- L'elenco per priorità e la Cronologia usano ancora la card estesa, con prossima azione e checkpoint.
+
+### Popup di dettaglio
+
+- Una finestra `<dialog>` modale al centro, a tutto schermo sul telefono; Chiudi o Esc la chiudono e il focus torna alla scheda.
+- Mostra stato, checkpoint, attese aperte, blocchi (cosa aspetta e cosa blocca) e ore registrate.
+- **Si modificano** titolo, prossima azione, descrizione, scadenza e importanza, con "Salva": l'app scrive solo questi campi. Il titolo di un task GitHub non si cambia, e il popup dice perché.
+- In fondo "Sposta in" (le colonne permesse) ed "Elimina", con le stesse regole di prima.
 
 ### Icona del progetto
 
