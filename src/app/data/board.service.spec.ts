@@ -43,7 +43,7 @@ function doneRow(overrides: Record<string, unknown> = {}) {
 function query(result: Result | Promise<never>) {
   const calls: [string, ...unknown[]][] = [];
   const builder: Record<string, unknown> = {};
-  for (const method of ['select', 'eq', 'gte', 'order']) {
+  for (const method of ['select', 'eq', 'in', 'gte', 'order']) {
     builder[method] = (...args: unknown[]) => {
       calls.push([method, ...args]);
       return builder;
@@ -54,9 +54,23 @@ function query(result: Result | Promise<never>) {
   return { builder, calls };
 }
 
-function setup(open: Result | Promise<never>, done: Result, projects: Result) {
-  const queries = { v_priorities: query(open), v_tasks: query(done), projects: query(projects) };
-  const from = vi.fn((table: keyof typeof queries) => queries[table].builder);
+function setup(
+  open: Result | Promise<never>,
+  done: Result,
+  projects: Result,
+  parked: Result = { data: [], error: null },
+) {
+  const queries = {
+    v_priorities: query(open),
+    v_tasks: query(done),
+    parked: query(parked),
+    projects: query(projects),
+  };
+  // v_tasks is read twice: first the done tasks, then the parked ones.
+  let vTasksReads = 0;
+  const from = vi.fn((table: 'v_priorities' | 'v_tasks' | 'projects') =>
+    table === 'v_tasks' && vTasksReads++ > 0 ? queries.parked.builder : queries[table].builder,
+  );
   TestBed.configureTestingModule({ providers: [{ provide: SUPABASE, useValue: { from } }] });
   return { service: TestBed.inject(BoardService), queries };
 }
@@ -99,6 +113,36 @@ describe('BoardService', () => {
         fromGithub: true,
         completedAt: '2026-11-24T16:00:00+00:00',
       }),
+    ]);
+  });
+
+  it('reads every task on hold or cancelled of the active projects, latest change first', async () => {
+    const { service, queries } = setup(
+      { data: [], error: null },
+      { data: [], error: null },
+      COLORS,
+      {
+        data: [
+          openRow({ id: 'h1', status: 'on_hold' }),
+          openRow({ id: 'c1', status: 'cancelled' }),
+          openRow({ id: 'x', status: 'todo' }),
+        ],
+        error: null,
+      },
+    );
+
+    const tasks = await service.load(SINCE);
+
+    expect(queries.parked.calls).toEqual(
+      expect.arrayContaining([
+        ['in', 'status', ['on_hold', 'cancelled']],
+        ['eq', 'project_status', 'active'],
+        ['order', 'updated_at', { ascending: false }],
+      ]),
+    );
+    expect(tasks.map((t) => [t.id, t.status, t.priorityRank])).toEqual([
+      ['h1', 'on_hold', null],
+      ['c1', 'cancelled', null],
     ]);
   });
 

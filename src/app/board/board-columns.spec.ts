@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 
 import { boardTask } from '../../testing/board-task.fixture';
 import type { BoardTask } from '../data/board.service';
+import { PreferencesService, type BoardColumnKey } from '../data/preferences.service';
 import { TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
@@ -11,12 +12,25 @@ import { buildColumns, doneSince } from './board.model';
 // 25 November 2026, 9:00 local time.
 const NOW = new Date(2026, 10, 25, 9, 0);
 
-async function render(tasks: BoardTask[], setStatus = vi.fn(() => Promise.resolve())) {
+interface Preferences {
+  loadBoardColumns: () => Promise<BoardColumnKey[] | null>;
+  saveBoardColumns: (columns: readonly BoardColumnKey[]) => Promise<void>;
+}
+
+async function render(
+  tasks: BoardTask[],
+  setStatus = vi.fn(() => Promise.resolve()),
+  preferences: Preferences = {
+    loadBoardColumns: vi.fn(() => Promise.resolve(null)),
+    saveBoardColumns: vi.fn(() => Promise.resolve()),
+  },
+) {
   await TestBed.configureTestingModule({
     imports: [BoardColumns],
     providers: [
       provideRouter([]),
       { provide: TaskService, useValue: { setStatus } },
+      { provide: PreferencesService, useValue: preferences },
       { provide: CLOCK, useValue: () => NOW },
     ],
   }).compileComponents();
@@ -30,7 +44,23 @@ async function render(tasks: BoardTask[], setStatus = vi.fn(() => Promise.resolv
   fixture.componentInstance.moved.subscribe(moved);
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
-  return { fixture, element, setStatus, moved };
+  return { fixture, element, setStatus, moved, preferences };
+}
+
+function shownColumns(element: HTMLElement): string[] {
+  return [...element.querySelectorAll<HTMLElement>('.column')].map(
+    (c) => c.dataset['column'] ?? '',
+  );
+}
+
+function checkbox(element: HTMLElement, label: string): HTMLInputElement {
+  const found = [...element.querySelectorAll('.columns-menu__option')].find(
+    (o) => (o.textContent ?? '').trim() === label,
+  );
+  if (!found) {
+    throw new Error(`No column option "${label}"`);
+  }
+  return found.querySelector('input')!;
 }
 
 function column(element: HTMLElement, key: string): string[] {
@@ -75,7 +105,7 @@ describe('BoardColumns', () => {
     const targets = [...element.querySelectorAll('.move__target')].map((b) =>
       b.textContent?.trim(),
     );
-    expect(targets).toEqual(['In corso', 'Fatto']);
+    expect(targets).toEqual(['In corso', 'Sospeso', 'Fatto', 'Annullato']);
 
     target(element, 'In corso').click();
     await fixture.whenStable();
@@ -84,6 +114,79 @@ describe('BoardColumns', () => {
     expect(column(element, 'in_progress')).toEqual(['Preventivo']);
     expect(column(element, 'todo')).toEqual([]);
     expect(moved).toHaveBeenCalledTimes(1);
+  });
+
+  it('moves a card to Sospeso with status on_hold', async () => {
+    const { fixture, element, setStatus } = await render([
+      boardTask({ id: 't1', title: 'Preventivo' }),
+    ]);
+
+    button(element, 'Sposta in…').click();
+    await fixture.whenStable();
+    target(element, 'Sospeso').click();
+    await fixture.whenStable();
+
+    expect(setStatus).toHaveBeenCalledWith('t1', 'on_hold');
+    expect(column(element, 'on_hold')).toEqual(['Preventivo']);
+  });
+
+  it('shows every column but Annullato until a choice is saved', async () => {
+    const { fixture, element } = await render([]);
+
+    expect(shownColumns(element)).toEqual(['todo', 'in_progress', 'blocked', 'on_hold', 'done']);
+    button(element, 'Colonne').click();
+    await fixture.whenStable();
+    expect(checkbox(element, 'Annullato').checked).toBe(false);
+    expect(checkbox(element, 'Sospeso').checked).toBe(true);
+  });
+
+  it('shows the saved columns', async () => {
+    const { element } = await render([], undefined, {
+      loadBoardColumns: vi.fn(() => Promise.resolve<BoardColumnKey[]>(['todo', 'cancelled'])),
+      saveBoardColumns: vi.fn(() => Promise.resolve()),
+    });
+
+    expect(shownColumns(element)).toEqual(['todo', 'cancelled']);
+  });
+
+  it('saves the choice made in the Colonne menu and keeps one column at least', async () => {
+    const saveBoardColumns = vi.fn(() => Promise.resolve());
+    const { fixture, element } = await render([], undefined, {
+      loadBoardColumns: vi.fn(() => Promise.resolve<BoardColumnKey[]>(['todo', 'done'])),
+      saveBoardColumns,
+    });
+
+    const trigger = button(element, 'Colonne');
+    trigger.click();
+    await fixture.whenStable();
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+
+    checkbox(element, 'Annullato').click();
+    await fixture.whenStable();
+    expect(saveBoardColumns).toHaveBeenLastCalledWith(['todo', 'done', 'cancelled']);
+    expect(shownColumns(element)).toEqual(['todo', 'done', 'cancelled']);
+
+    checkbox(element, 'Da fare').click();
+    checkbox(element, 'Fatto').click();
+    await fixture.whenStable();
+    expect(shownColumns(element)).toEqual(['cancelled']);
+    expect(checkbox(element, 'Annullato').disabled).toBe(true);
+  });
+
+  it('says so when the column choice cannot be saved', async () => {
+    const { fixture, element } = await render([], undefined, {
+      loadBoardColumns: vi.fn(() => Promise.resolve(null)),
+      saveBoardColumns: vi.fn(() => Promise.reject(new Error('offline'))),
+    });
+
+    button(element, 'Colonne').click();
+    await fixture.whenStable();
+    checkbox(element, 'Annullato').click();
+    await fixture.whenStable();
+
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+      'Non sono riuscito a salvare la scelta delle colonne',
+    );
   });
 
   it('closes the menu with Escape and gives the focus back to its button', async () => {

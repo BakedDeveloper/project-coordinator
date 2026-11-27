@@ -12,25 +12,28 @@ Il disegno di riferimento della prima versione, a elenchi verticali, è il canva
 
 ### Colonne
 
-Le board hanno quattro colonne, sempre in quest'ordine:
+Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 
 | Colonna | Quali task |
 |---|---|
 | **Da fare** | `status = 'todo'` e non bloccati |
 | **In corso** | `status = 'in_progress'` e non bloccati. Se è vuota, la colonna lo dice e indica il prossimo task da iniziare |
-| **Bloccato** | `is_blocked` vero, **qualunque sia lo stato**: un blocco è la prima cosa da vedere |
+| **Bloccato** | `is_blocked` vero, **qualunque sia lo stato aperto** (anche `on_hold`): un blocco è la prima cosa da vedere |
+| **Sospeso** | `status = 'on_hold'` e non bloccati: una modifica messa da parte. La mettono Simone o i progetti; esce dalle priorità. I task che aspettano qualcuno **non** vanno qui: restano nella loro colonna con l'etichetta "aspetta …" |
 | **Fatto** | `status = 'done'` con `completed_at` negli ultimi 14 giorni, i più recenti in alto |
+| **Annullato** | `status = 'cancelled'`, tutti, l'ultimo modificato in alto. Non si fa più ma resta registrato |
 
-- I task `cancelled` non compaiono.
+- Sospeso e Annullato mostrano l'ultimo task modificato in alto (`updated_at`), dei progetti attivi.
+- Il menu **"Colonne"** sopra la board sceglie quali colonne vedere, con una casella per colonna; almeno una resta visibile. La scelta si salva in `user_preferences.board_columns` e vale su ogni dispositivo. Di base si vedono tutte tranne Annullato.
 - Dentro Da fare, In corso e Bloccato l'ordine è **`priority_rank`**, calcolato dal database (`v_priorities`). L'app ordina esplicitamente per quella colonna, perché l'ordine scritto in una vista non è garantito quando la si legge dall'API, e non ricalcola niente.
 - `v_priorities` contiene solo i task aperti dei progetti attivi: i task fatti si leggono da `v_tasks`.
 - Ogni colonna mostra nell'intestazione quanti task contiene; se è vuota lo dice.
 
 ### Spostare i task
 
-- Si cambia stato trascinando una card fra Da fare, In corso e Fatto (`@angular/cdk`), oppure con il bottone **"Sposta in…"** della card, che funziona da tastiera e su telefono.
+- Si cambia stato trascinando una card fra Da fare, In corso, Sospeso, Fatto e Annullato (`@angular/cdk`), oppure con il bottone **"Sposta in…"** della card, che funziona da tastiera e su telefono. Il menu offre anche le colonne nascoste.
 - **Bloccato non si raggiunge trascinando**: un blocco ha bisogno di sapere da cosa dipende (`blocks`). Si blocca e si sblocca dal pannello di dettaglio.
-- Un task bloccato si sposta solo in Fatto: in Da fare o In corso resterebbe comunque in Bloccato.
+- Un task bloccato si sposta solo in Fatto o in Annullato: altrove resterebbe comunque in Bloccato.
 - Se il salvataggio non riesce, la card torna al suo posto e un messaggio lo dice.
 - I task **di origine GitHub** (`origin = 'github'`, oggi Nutrirea) non si spostano: stato e titolo li decide GitHub. La card mostra un lucchetto e lo spiega.
 - Dopo uno spostamento l'ordine torna a essere quello di `priority_rank`, riletto dal database.

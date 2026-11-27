@@ -18,7 +18,14 @@ const PROJECT: Project = {
 };
 
 function detail(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
-  return { project: PROJECT, tasks: [], doneTasks: [], checkpoints: [], ...overrides };
+  return {
+    project: PROJECT,
+    tasks: [],
+    doneTasks: [],
+    parkedTasks: [],
+    checkpoints: [],
+    ...overrides,
+  };
 }
 
 /** Opens the Cronologia tab unless told otherwise: most tests are about the dated view. */

@@ -1,6 +1,7 @@
 import { boardTask } from '../../testing/board-task.fixture';
 import { doneProjectTask, projectTask } from '../../testing/project-task.fixture';
 import {
+  DEFAULT_VISIBLE_COLUMNS,
   buildColumns,
   columnOf,
   doneSince,
@@ -68,10 +69,29 @@ describe('board model', () => {
     expect(columnOf(boardTask({ status: 'done', isBlocked: true }))).toBe('done');
   });
 
-  it('returns the four columns in order, open ones by priority_rank', () => {
+  it('puts on hold tasks in Sospeso, unless blocked, and cancelled ones in Annullato', () => {
+    expect(columnOf(boardTask({ status: 'on_hold' }))).toBe('on_hold');
+    expect(columnOf(boardTask({ status: 'on_hold', isBlocked: true }))).toBe('blocked');
+    expect(columnOf(boardTask({ status: 'cancelled', isBlocked: true }))).toBe('cancelled');
+    // Waiting for someone is a label, not a column.
+    expect(columnOf(boardTask({ status: 'todo', isWaiting: true }))).toBe('todo');
+  });
+
+  it('shows every column but Annullato until Simone chooses', () => {
+    expect(DEFAULT_VISIBLE_COLUMNS).toEqual(['todo', 'in_progress', 'blocked', 'on_hold', 'done']);
+  });
+
+  it('returns the six columns in order, open ones by priority_rank', () => {
     const columns = buildColumns(TASKS, ALL, SINCE);
 
-    expect(columns.map((c) => c.label)).toEqual(['Da fare', 'In corso', 'Bloccato', 'Fatto']);
+    expect(columns.map((c) => c.label)).toEqual([
+      'Da fare',
+      'In corso',
+      'Bloccato',
+      'Sospeso',
+      'Fatto',
+      'Annullato',
+    ]);
     expect(ids(ALL)).toMatchObject({
       todo: ['todo-1', 'todo-2'],
       in_progress: ['doing'],
@@ -128,9 +148,11 @@ describe('board model', () => {
         projectTask({ id: 'ranked', priorityRank: 7 }),
       ],
       doneTasks: [doneProjectTask({ id: 'done', completedAt: '2026-11-24T16:00:00Z' })],
+      parkedTasks: [{ ...projectTask({ id: 'held' }), status: 'on_hold' }],
     });
 
-    expect(tasks.map((t) => t.id)).toEqual(['ranked', 'early', 'late', 'done']);
+    expect(tasks.map((t) => t.id)).toEqual(['ranked', 'early', 'late', 'done', 'held']);
+    expect(tasks[4]).toMatchObject({ status: 'on_hold', priorityRank: null, completedAt: null });
     expect(tasks.every((t) => t.projectScope === 'personal')).toBe(true);
     expect(tasks[3]).toMatchObject({
       status: 'done',
@@ -141,16 +163,44 @@ describe('board model', () => {
   });
 
   it('moves a task to the other columns, never to Bloccato', () => {
-    expect(moveTargets(boardTask({ status: 'todo' }))).toEqual(['in_progress', 'done']);
-    expect(moveTargets(boardTask({ status: 'in_progress' }))).toEqual(['todo', 'done']);
-    expect(moveTargets(boardTask({ status: 'done', completedAt: NOW.toISOString() }))).toEqual([
+    expect(moveTargets(boardTask({ status: 'todo' }))).toEqual([
+      'in_progress',
+      'on_hold',
+      'done',
+      'cancelled',
+    ]);
+    expect(moveTargets(boardTask({ status: 'on_hold' }))).toEqual([
       'todo',
       'in_progress',
+      'done',
+      'cancelled',
+    ]);
+    expect(moveTargets(boardTask({ status: 'cancelled' }))).toEqual([
+      'todo',
+      'in_progress',
+      'on_hold',
+      'done',
     ]);
   });
 
-  it('moves a blocked task only to Fatto: elsewhere it would stay blocked', () => {
-    expect(moveTargets(boardTask({ status: 'in_progress', isBlocked: true }))).toEqual(['done']);
+  it('moves a blocked task only to Fatto or Annullato: elsewhere it would stay blocked', () => {
+    expect(moveTargets(boardTask({ status: 'in_progress', isBlocked: true }))).toEqual([
+      'done',
+      'cancelled',
+    ]);
+  });
+
+  it('keeps Sospeso and Annullato in the database order, the latest change first', () => {
+    const columns = buildColumns(
+      [
+        boardTask({ id: 'h2', status: 'on_hold', priorityRank: null }),
+        boardTask({ id: 'h1', status: 'on_hold', priorityRank: null }),
+        boardTask({ id: 'c1', status: 'cancelled', priorityRank: null }),
+      ],
+      ALL,
+      SINCE,
+    );
+    expect(columnIds(columns)).toMatchObject({ on_hold: ['h2', 'h1'], cancelled: ['c1'] });
   });
 
   it('never moves a GitHub task', () => {
@@ -179,13 +229,19 @@ describe('board model', () => {
       todo: [],
       in_progress: ['b', 'a'],
       blocked: [],
+      on_hold: [],
       done: ['d'],
+      cancelled: [],
     });
     expect(toProgress[1].tasks[1]).toMatchObject({ status: 'in_progress', completedAt: null });
 
     const toDone = withMove(columns, 'b', 'done', NOW);
     expect(columnIds(toDone).done).toEqual(['b', 'd']);
-    expect(toDone[3].tasks[0]).toMatchObject({ status: 'done', completedAt: NOW.toISOString() });
+    expect(toDone[4].tasks[0]).toMatchObject({ status: 'done', completedAt: NOW.toISOString() });
+
+    const toHold = withMove(columns, 'a', 'on_hold', NOW);
+    expect(columnIds(toHold).on_hold).toEqual(['a']);
+    expect(toHold[3].tasks[0]).toMatchObject({ status: 'on_hold', completedAt: null });
 
     expect(withMove(columns, 'missing', 'done', NOW)).toEqual(columns);
   });

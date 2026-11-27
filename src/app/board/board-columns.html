@@ -1,9 +1,40 @@
+<div class="board-tools">
+  <button
+    #columnsTrigger
+    type="button"
+    class="columns-trigger"
+    aria-controls="board-columns-menu"
+    [attr.aria-expanded]="columnsMenuOpen()"
+    (click)="columnsMenuOpen.set(!columnsMenuOpen())"
+    (keydown.escape)="closeColumnsMenu(columnsTrigger)"
+  >
+    Colonne
+  </button>
+  @if (columnsMenuOpen()) {
+    <fieldset class="columns-menu" id="board-columns-menu">
+      <legend class="columns-menu__legend">Colonne da mostrare</legend>
+      @for (column of allColumns; track column.key) {
+        <label class="columns-menu__option">
+          <input
+            type="checkbox"
+            [checked]="isVisible(column.key)"
+            [disabled]="isLastVisible(column.key)"
+            (change)="toggleColumn(column.key, $any($event.target).checked)"
+            (keydown.escape)="closeColumnsMenu(columnsTrigger)"
+          />
+          {{ column.label }}
+        </label>
+      }
+    </fieldset>
+  }
+</div>
+
 <div class="column-tabs" role="group" aria-label="Colonna da mostrare">
-  @for (column of shown(); track column.key) {
+  @for (column of displayed(); track column.key) {
     <button
       type="button"
       class="column-tab"
-      [attr.aria-pressed]="current() === column.key"
+      [attr.aria-pressed]="currentKey() === column.key"
       (click)="current.set(column.key)"
     >
       {{ column.label }} <span class="column-tab__count">{{ column.tasks.length }}</span>
@@ -18,12 +49,12 @@
   </div>
 }
 
-<div class="board" cdkDropListGroup>
-  @for (column of shown(); track column.key) {
+<div class="board" cdkDropListGroup [style.--columns]="displayed().length">
+  @for (column of displayed(); track column.key) {
     <section
       class="column"
       [attr.data-column]="column.key"
-      [class.column--current]="current() === column.key"
+      [class.column--current]="currentKey() === column.key"
       [attr.aria-labelledby]="'column-' + column.key"
     >
       <h2 class="column__header" [id]="'column-' + column.key">
