@@ -21,8 +21,11 @@ import {
 import { LucideLock } from '@lucide/angular';
 
 import { TaskCard } from '../all-projects/task-card';
+import { ColumnsMenu } from './columns-menu';
 import { DeleteDialog } from './delete-dialog';
-import type { BoardTask } from '../data/board.service';
+import { PausedProjectEntry } from './paused-project';
+import type { BoardTask, PausedProject } from '../data/board.service';
+import { ProjectService } from '../data/project.service';
 import { PreferencesService } from '../data/preferences.service';
 import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
@@ -39,7 +42,7 @@ import {
 const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
 
 /**
- * The four board columns (docs/viste.md, "Colonne"), shared by the shared board and the
+ * The board columns (docs/viste.md, "Colonne"), shared by the shared board and the
  * project board. On a phone only one column shows, chosen with the column tabs. The
  * "Colonne" menu chooses which columns to show; the choice is saved in the preferences.
  *
@@ -48,7 +51,16 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
  */
 @Component({
   selector: 'app-board-columns',
-  imports: [TaskCard, CdkDropListGroup, CdkDropList, CdkDrag, LucideLock, DeleteDialog],
+  imports: [
+    TaskCard,
+    CdkDropListGroup,
+    CdkDropList,
+    CdkDrag,
+    LucideLock,
+    DeleteDialog,
+    PausedProjectEntry,
+    ColumnsMenu,
+  ],
   templateUrl: './board-columns.html',
   styleUrl: './board-columns.css',
 })
@@ -57,21 +69,21 @@ export class BoardColumns {
   private readonly clock = inject(CLOCK);
   private readonly preferences = inject(PreferencesService);
   private readonly injector = inject(Injector);
+  private readonly projects = inject(ProjectService);
 
   readonly columns = input.required<BoardColumn[]>();
   /** Today as an ISO date, to tell due from overdue. */
   readonly today = input.required<string>();
   /** The project tag on the cards. Off on a project board. */
   readonly showProject = input(true);
+  /** Suspended projects, shown at the top of Sospeso instead of their tasks. */
+  readonly pausedProjects = input<PausedProject[]>([]);
 
   /** A task changed status in the database: the page reloads to get the new order. */
   readonly moved = output<void>();
 
-  /** Every column, for the "Colonne" menu. */
-  protected readonly allColumns = BOARD_COLUMNS;
   /** The columns to show, in board order. */
   protected readonly visible = signal<readonly ColumnKey[]>(DEFAULT_VISIBLE_COLUMNS);
-  protected readonly columnsMenuOpen = signal(false);
 
   /** The column chosen on a phone, where only one fits. */
   protected readonly current = signal<ColumnKey>('todo');
@@ -88,6 +100,8 @@ export class BoardColumns {
     computation: () => new Map(),
   });
   protected readonly error = signal<string | null>(null);
+  /** The project whose resume is being written. */
+  protected readonly resuming = signal<string | null>(null);
   /** Tasks deleted, hidden until the page gives new columns. */
   private readonly removed = linkedSignal<BoardColumn[], ReadonlySet<string>>({
     source: this.columns,
@@ -131,16 +145,6 @@ export class BoardColumns {
     );
   }
 
-  protected isVisible(key: ColumnKey): boolean {
-    return this.visible().includes(key);
-  }
-
-  /** The last visible column cannot be hidden: the board would be empty. */
-  protected isLastVisible(key: ColumnKey): boolean {
-    const visible = this.visible();
-    return visible.length === 1 && visible[0] === key;
-  }
-
   protected toggleColumn(key: ColumnKey, show: boolean): void {
     const next = BOARD_COLUMNS.map((c) => c.key).filter((k) =>
       k === key ? show : this.visible().includes(k),
@@ -153,11 +157,6 @@ export class BoardColumns {
       () => this.error.set(null),
       () => this.error.set('Non sono riuscito a salvare la scelta delle colonne. Riprova.'),
     );
-  }
-
-  protected closeColumnsMenu(trigger: HTMLButtonElement): void {
-    this.columnsMenuOpen.set(false);
-    trigger.focus();
   }
 
   /** Shown in an empty In corso: the first task of Da fare. */
@@ -261,6 +260,24 @@ export class BoardColumns {
   protected cancelInstead(task: BoardTask): void {
     this.closeDelete();
     void this.move(task, 'cancelled');
+  }
+
+  /** Resumes a suspended project: its tasks come back where they were. */
+  protected async resume(project: PausedProject): Promise<void> {
+    if (this.resuming() !== null) {
+      return;
+    }
+    this.resuming.set(project.id);
+    this.error.set(null);
+    try {
+      await this.projects.setStatus(project.id, 'active');
+      this.moved.emit();
+    } catch {
+      // No details: they could contain project data (CLAUDE.md, Sicurezza).
+      this.error.set(`Non sono riuscito a riprendere «${project.name}». Riprova.`);
+    } finally {
+      this.resuming.set(null);
+    }
   }
 
   async move(task: BoardTask, to: TargetColumn): Promise<void> {

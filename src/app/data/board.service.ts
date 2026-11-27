@@ -35,6 +35,17 @@ export interface BoardTask {
   completedAt: string | null;
 }
 
+/** A suspended project (`status = 'paused'`): one entry on the board instead of its tasks. */
+export interface PausedProject {
+  id: string;
+  name: string;
+  scope: ProjectScope;
+  /** `projects.color`; null when the project has none. */
+  color: string | null;
+  /** Tasks still open (to do, in progress, on hold), waiting for the project to resume. */
+  openTasks: number;
+}
+
 /** Raised when the board cannot be read. It carries no database data. */
 export class BoardUnavailableError extends Error {
   constructor() {
@@ -143,6 +154,47 @@ export class BoardService {
     }
 
     return tasks;
+  }
+
+  /** The suspended projects, by name, with the number of their open tasks. */
+  async pausedProjects(): Promise<PausedProject[]> {
+    const [projects, tasks] = await Promise.all([
+      this.supabase
+        .from('projects')
+        .select('id, name, scope, color')
+        .eq('status', 'paused')
+        .order('name'),
+      this.supabase
+        .from('v_tasks')
+        .select('project_id')
+        .eq('project_status', 'paused')
+        .in('status', ['todo', 'in_progress', 'on_hold']),
+    ]).catch(() => {
+      throw new BoardUnavailableError();
+    });
+    if (projects.error || tasks.error) {
+      throw new BoardUnavailableError();
+    }
+
+    const open = new Map<string, number>();
+    for (const row of tasks.data) {
+      if (row.project_id !== null) {
+        open.set(row.project_id, (open.get(row.project_id) ?? 0) + 1);
+      }
+    }
+    return projects.data.flatMap((p) =>
+      isScope(p.scope)
+        ? [
+            {
+              id: p.id,
+              name: p.name,
+              scope: p.scope,
+              color: p.color,
+              openTasks: open.get(p.id) ?? 0,
+            },
+          ]
+        : [],
+    );
   }
 }
 

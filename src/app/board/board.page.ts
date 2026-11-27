@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 
 import { SCOPE_FILTERS, toIsoDate, type ScopeFilter } from '../all-projects/all-projects.model';
-import { BoardService, type BoardTask } from '../data/board.service';
+import { BoardService, type BoardTask, type PausedProject } from '../data/board.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
 import { NewTask } from './new-task';
@@ -27,11 +27,21 @@ export class BoardPage {
   protected readonly today = signal(toIsoDate(this.clock()));
 
   private readonly tasks = signal<BoardTask[]>([]);
+  private readonly paused = signal<PausedProject[]>([]);
   private readonly since = signal(doneSince(this.clock()));
 
   protected readonly projects = computed(() => projectOptions(this.tasks(), this.scope()));
   protected readonly columns = computed(() =>
     buildColumns(this.tasks(), { scope: this.scope(), projectId: this.projectId() }, this.since()),
+  );
+
+  /** The suspended projects within the filters, for the top of Sospeso. */
+  protected readonly pausedProjects = computed(() =>
+    this.paused().filter(
+      (p) =>
+        (this.scope() === 'all' || p.scope === this.scope()) &&
+        (this.projectId() === null || p.id === this.projectId()),
+    ),
   );
 
   constructor() {
@@ -42,8 +52,12 @@ export class BoardPage {
     this.state.set('loading');
     const now = this.clock();
     try {
-      const tasks = await this.board.load(doneSince(now));
+      const [tasks, paused] = await Promise.all([
+        this.board.load(doneSince(now)),
+        this.readPaused(),
+      ]);
       this.tasks.set(tasks);
+      this.paused.set(paused);
       this.today.set(toIsoDate(now));
       this.since.set(doneSince(now));
       this.state.set('ready');
@@ -57,12 +71,22 @@ export class BoardPage {
   protected async refresh(): Promise<void> {
     const now = this.clock();
     try {
-      this.tasks.set(await this.board.load(doneSince(now)));
+      const [tasks, paused] = await Promise.all([
+        this.board.load(doneSince(now)),
+        this.readPaused(),
+      ]);
+      this.tasks.set(tasks);
+      this.paused.set(paused);
       this.today.set(toIsoDate(now));
       this.since.set(doneSince(now));
     } catch {
       // The move is saved; the board keeps the moved card until the next load.
     }
+  }
+
+  /** Without the suspended projects the board still works: they just do not show. */
+  private readPaused(): Promise<PausedProject[]> {
+    return this.board.pausedProjects().catch(() => []);
   }
 
   protected chooseScope(scope: ScopeFilter): void {

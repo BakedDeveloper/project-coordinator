@@ -88,6 +88,14 @@ export class ProjectUnavailableError extends Error {
   }
 }
 
+/** Raised when the status of a project cannot be changed. It carries no database data. */
+export class ProjectUpdateError extends Error {
+  constructor() {
+    super('Project update failed');
+    this.name = 'ProjectUpdateError';
+  }
+}
+
 // Literal strings: supabase-js derives the row types from them.
 const PROJECT_COLUMNS = 'id, name, scope, status, color, weekly_hours';
 const TASK_COLUMNS =
@@ -103,6 +111,26 @@ export class ProjectService {
   private readonly supabase = inject(SUPABASE);
 
   /** Every project, any status, by name. */
+  /**
+   * Suspends (paused) or resumes (active) a project. Only between those two: a closed project
+   * stays closed. Writes only the status; the trigger records it as manual.
+   */
+  async setStatus(id: string, status: 'active' | 'paused'): Promise<void> {
+    const result = await this.supabase
+      .from('projects')
+      .update({ status })
+      .eq('id', id)
+      .in('status', ['active', 'paused'])
+      .select('id')
+      .then(
+        (r) => r,
+        () => null,
+      );
+    if (result === null || result.error || result.data.length !== 1) {
+      throw new ProjectUpdateError();
+    }
+  }
+
   async list(): Promise<ProjectLink[]> {
     const result = await this.supabase
       .from('projects')

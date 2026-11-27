@@ -21,11 +21,29 @@
           <app-project-badge [projectId]="p.id" [name]="p.name" [color]="color()" [large]="true" />
         </h1>
         <p class="page-header__meta">{{ meta() }}</p>
+        @if (p.status !== 'closed') {
+          <button
+            type="button"
+            class="status-toggle"
+            [disabled]="statusBusy()"
+            (click)="toggleStatus()"
+          >
+            {{ p.status === 'active' ? 'Sospendi progetto' : 'Riprendi progetto' }}
+          </button>
+        }
       </div>
+      @if (statusError(); as message) {
+        <p class="message message--error" role="alert">{{ message }}</p>
+      }
 
-      @if (unprioritized()) {
+      @if (p.status === 'paused') {
         <p class="notice">
-          Progetto in pausa (o chiuso): i task non hanno priorità, sono in ordine di creazione.
+          Progetto sospeso: i suoi task non sono sulla board condivisa e non hanno priorità; qui
+          sono in ordine di creazione. Riprendilo per rimetterli al loro posto.
+        </p>
+      } @else if (unprioritized()) {
+        <p class="notice">
+          Progetto chiuso: i task non hanno priorità, sono in ordine di creazione.
         </p>
       }
       <nav class="tabs" aria-label="Viste del progetto">

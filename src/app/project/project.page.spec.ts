@@ -32,8 +32,9 @@ function detail(overrides: Partial<ProjectDetail> = {}): ProjectDetail {
 async function setup(
   load: (id: string) => Promise<ProjectDetail | null>,
   query: Record<string, string> = { vista: 'cronologia' },
+  setStatus = vi.fn(() => Promise.resolve()),
 ) {
-  const projects = { load: vi.fn(load) };
+  const projects = { load: vi.fn(load), setStatus };
   const params = new BehaviorSubject<ParamMap>(convertToParamMap({ id: 'p1' }));
   const queryParams = new BehaviorSubject<ParamMap>(convertToParamMap(query));
   await TestBed.configureTestingModule({
@@ -206,6 +207,46 @@ describe('ProjectPage', () => {
     expect(element.querySelector('.board__hint')).toBeNull();
   });
 
+  it('suspends an active project and reads it again', async () => {
+    const setStatus = vi.fn(() => Promise.resolve());
+    const { fixture, element, projects } = await setup(async () => detail(), {}, setStatus);
+
+    const button = element.querySelector<HTMLButtonElement>('.status-toggle')!;
+    expect(text(button)).toBe('Sospendi progetto');
+    button.click();
+    await fixture.whenStable();
+
+    expect(setStatus).toHaveBeenCalledWith('p1', 'paused');
+    expect(projects.load).toHaveBeenCalledTimes(2);
+  });
+
+  it('resumes a paused project, and says so when it fails', async () => {
+    const setStatus = vi.fn(() => Promise.reject(new Error('offline')));
+    const { fixture, element } = await setup(
+      async () => detail({ project: { ...PROJECT, status: 'paused' } }),
+      {},
+      setStatus,
+    );
+
+    const button = element.querySelector<HTMLButtonElement>('.status-toggle')!;
+    expect(text(button)).toBe('Riprendi progetto');
+    button.click();
+    await fixture.whenStable();
+
+    expect(setStatus).toHaveBeenCalledWith('p1', 'active');
+    expect(text(element.querySelector('[role="alert"]'))).toBe(
+      'Non sono riuscito a riprendere il progetto. Riprova.',
+    );
+  });
+
+  it('offers no suspend or resume for a closed project', async () => {
+    const { element } = await setup(async () =>
+      detail({ project: { ...PROJECT, status: 'closed' } }),
+    );
+
+    expect(element.querySelector('.status-toggle')).toBeNull();
+  });
+
   it('orders a paused project by creation and says so', async () => {
     const { element } = await setup(async () =>
       detail({
@@ -218,7 +259,7 @@ describe('ProjectPage', () => {
     );
 
     expect(text(element.querySelector('.notice'))).toBe(
-      'Progetto in pausa (o chiuso): i task non hanno priorità, sono in ordine di creazione.',
+      'Progetto sospeso: i suoi task non sono sulla board condivisa e non hanno priorità; qui sono in ordine di creazione. Riprendilo per rimetterli al loro posto.',
     );
     expect(text(element.querySelector('.page-header__meta'))).toBe('Personale · In pausa');
     expect(Array.from(element.querySelectorAll('.undated h3')).map((h) => h.textContent)).toEqual([

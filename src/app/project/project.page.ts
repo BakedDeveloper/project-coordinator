@@ -76,6 +76,10 @@ export class ProjectPage {
     const status = this.project()?.status;
     return status === 'paused' || status === 'closed';
   });
+  /** Suspending or resuming is being written. */
+  protected readonly statusBusy = signal(false);
+  protected readonly statusError = signal<string | null>(null);
+
   protected readonly hasPlan = computed(() => (this.project()?.weeklyHours ?? null) !== null);
 
   private readonly tasks = computed(() => this.detail()?.tasks ?? []);
@@ -124,6 +128,29 @@ export class ProjectPage {
       }
     } catch {
       // The move is saved; the board keeps the moved card until the next load.
+    }
+  }
+
+  /** Suspends an active project, or resumes a paused one; the tasks stay as they are. */
+  protected async toggleStatus(): Promise<void> {
+    const p = this.project();
+    if (!p || p.status === 'closed' || this.statusBusy()) {
+      return;
+    }
+    this.statusBusy.set(true);
+    this.statusError.set(null);
+    try {
+      await this.projects.setStatus(p.id, p.status === 'active' ? 'paused' : 'active');
+      await this.refresh();
+    } catch {
+      // No details: they could contain project data (CLAUDE.md, Sicurezza).
+      this.statusError.set(
+        p.status === 'active'
+          ? 'Non sono riuscito a sospendere il progetto. Riprova.'
+          : 'Non sono riuscito a riprendere il progetto. Riprova.',
+      );
+    } finally {
+      this.statusBusy.set(false);
     }
   }
 
