@@ -7,6 +7,7 @@ import { map } from 'rxjs';
 import { formatShortDate, projectColor, toIsoDate } from '../all-projects/all-projects.model';
 import { TaskCard } from '../all-projects/task-card';
 import { BoardColumns } from '../board/board-columns';
+import { NewTask } from '../board/new-task';
 import { ProjectBadge } from '../shared/project-badge';
 import { buildColumns, doneSince, projectBoardTasks } from '../board/board.model';
 import { ProjectService, type ProjectDetail } from '../data/project.service';
@@ -34,7 +35,7 @@ const APP_NAME = 'Coordinatore';
  */
 @Component({
   selector: 'app-project-page',
-  imports: [TaskCard, BoardColumns, RouterLink, ProjectBadge],
+  imports: [TaskCard, BoardColumns, NewTask, RouterLink, ProjectBadge],
   templateUrl: './project.page.html',
   styleUrl: './project.page.css',
   host: { '[class.narrow]': "tab() === 'cronologia'" },

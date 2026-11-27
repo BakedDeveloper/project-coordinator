@@ -4,6 +4,7 @@ import { SCOPE_FILTERS, toIsoDate, type ScopeFilter } from '../all-projects/all-
 import { BoardService, type BoardTask } from '../data/board.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
+import { NewTask } from './new-task';
 import { buildColumns, doneSince, projectOptions } from './board.model';
 
 type LoadState = 'loading' | 'ready' | 'error';
@@ -11,7 +12,7 @@ type LoadState = 'loading' | 'ready' | 'error';
 /** Shared board of docs/viste.md: every task of every active project, by status. */
 @Component({
   selector: 'app-board-page',
-  imports: [BoardColumns],
+  imports: [BoardColumns, NewTask],
   templateUrl: './board.page.html',
   styleUrl: './board.page.css',
 })

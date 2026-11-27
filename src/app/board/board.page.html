@@ -36,6 +36,7 @@
     </div>
   }
   @default {
+    <app-new-task class="new-task-slot" (created)="refresh()" />
     <app-board-columns [columns]="columns()" [today]="today()" (moved)="refresh()" />
   }
 }

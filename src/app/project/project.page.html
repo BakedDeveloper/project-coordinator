@@ -45,6 +45,7 @@
       </nav>
 
       @if (tab() === 'board') {
+        <app-new-task class="new-task-slot" [projectId]="p.id" (created)="refresh()" />
         <app-board-columns
           [columns]="boardColumns()"
           [today]="today()"
