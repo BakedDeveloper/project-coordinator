@@ -57,16 +57,16 @@ describe('ProjectBadge', () => {
     expect(element.querySelector('.badge__initials')).toBeNull();
   });
 
-  it('shows no initials next to a client logo when the project has no logo or icon', async () => {
+  it('shows the generic icon, never initials, next to a client logo without project logo or icon', async () => {
     const element = await render({ ...FLEET, logo: null, icon: null });
 
     expect(element.querySelector('.badge__client-img')).not.toBeNull();
+    expect(element.querySelector('.badge__tag svg.badge__icon')).not.toBeNull();
     expect(element.querySelector('.badge__initials')).toBeNull();
-    expect(element.querySelector('.badge__tag')!.classList).toContain('badge__tag--text');
     expect(element.querySelector('.badge__name')?.textContent).toBe('Fleet');
   });
 
-  it('shows the full name and the initials without logo, short name or known icon', async () => {
+  it('shows the full name and the generic icon without logo, short name or known icon', async () => {
     const element = await render({
       ...FLEET,
       shortName: null,
@@ -78,14 +78,15 @@ describe('ProjectBadge', () => {
     expect(element.querySelector('.badge__name')?.textContent).toBe('Reply - Fleet');
     expect(element.querySelector('.badge__name')?.hasAttribute('aria-hidden')).toBe(false);
     expect(element.querySelector('.visually-hidden')).toBeNull();
-    expect(element.querySelector('.badge__initials')?.textContent).toBe('RF');
-    expect(element.querySelector('.badge__initials')?.getAttribute('aria-hidden')).toBe('true');
+    expect(element.querySelector('svg.badge__icon')?.getAttribute('aria-hidden')).toBe('true');
+    expect(element.querySelector('.badge__initials')).toBeNull();
   });
 
-  it('works without badge data: name and initials in the project colour', async () => {
+  it('works without badge data: name and generic icon in the project colour', async () => {
     const element = await render(null, 'Casa');
 
     expect(element.querySelector('.badge__name')?.textContent).toBe('Casa');
-    expect(element.querySelector('.badge__initials')?.textContent).toBe('CA');
+    expect(element.querySelector('svg.badge__icon')).not.toBeNull();
+    expect(element.textContent).not.toContain('CA');
   });
 });

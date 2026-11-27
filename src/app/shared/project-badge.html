@@ -2,17 +2,11 @@
   @if (clientLogo(); as url) {
     <span class="badge__client"><img class="badge__client-img" [src]="url" alt="" /></span>
   }
-  <span
-    class="badge__tag"
-    [class.badge__tag--text]="!logo() && !icon() && clientLogo()"
-    [style.background-color]="color()"
-  >
+  <span class="badge__tag" [style.background-color]="color()">
     @if (logo(); as url) {
       <span class="badge__logo"><img class="badge__logo-img" [src]="url" alt="" /></span>
-    } @else if (icon(); as i) {
-      <svg class="badge__icon" [lucideIcon]="i" aria-hidden="true"></svg>
-    } @else if (!clientLogo()) {
-      <span class="badge__initials" aria-hidden="true">{{ initials() }}</span>
+    } @else {
+      <svg class="badge__icon" [lucideIcon]="icon()" aria-hidden="true"></svg>
     }
     @if (shortened()) {
       <span class="badge__name" aria-hidden="true">{{ label() }}</span>

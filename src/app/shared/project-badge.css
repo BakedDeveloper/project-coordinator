@@ -42,11 +42,6 @@
   color: var(--color-on-project);
 }
 
-/* Only the name in the coloured part: even padding on both sides. */
-.badge__tag--text {
-  padding-left: 0.5rem;
-}
-
 /* With a client logo, the two parts read as one pill. */
 .badge__client + .badge__tag {
   border-radius: 0 999px 999px 0;
@@ -78,13 +73,6 @@
   height: 0.875rem;
 }
 
-.badge__initials {
-  flex: none;
-  font-size: 0.625rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
 .badge__name {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -110,10 +98,6 @@
   padding: 0.25rem 1rem 0.25rem 0.5rem;
 }
 
-.badge--large .badge__tag--text {
-  padding-left: 1rem;
-}
-
 .badge--large .badge__logo {
   width: 1.75rem;
   height: 1.75rem;
@@ -128,10 +112,6 @@
 .badge--large .badge__icon {
   width: 1.375rem;
   height: 1.375rem;
-}
-
-.badge--large .badge__initials {
-  font-size: 0.875rem;
 }
 
 .visually-hidden {

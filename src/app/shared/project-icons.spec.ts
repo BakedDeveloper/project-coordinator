@@ -1,23 +1,17 @@
-import { LucideTruck } from '@lucide/angular';
+import { LucideFolder, LucideTruck } from '@lucide/angular';
 
-import { initials, projectIcon } from './project-icons';
+import { GENERIC_PROJECT_ICON, projectIcon } from './project-icons';
 
 describe('project icons', () => {
   it('finds a known icon by its kebab-case name', () => {
     expect(projectIcon('truck')).toBe(LucideTruck);
   });
 
-  it('has no icon for a missing or unknown name', () => {
-    expect(projectIcon(null)).toBeNull();
-    expect(projectIcon('not-an-icon')).toBeNull();
+  it('gives the generic folder icon for a missing or unknown name, never nothing', () => {
+    expect(GENERIC_PROJECT_ICON).toBe(LucideFolder);
+    expect(projectIcon(null)).toBe(GENERIC_PROJECT_ICON);
+    expect(projectIcon('not-an-icon')).toBe(GENERIC_PROJECT_ICON);
     // Not fooled by names of Object.prototype.
-    expect(projectIcon('constructor')).toBeNull();
-  });
-
-  it('makes up to two initials from the name', () => {
-    expect(initials('Reply - Fleet')).toBe('RF');
-    expect(initials('Fleet')).toBe('FL');
-    expect(initials('Competenze IA')).toBe('CI');
-    expect(initials('  ')).toBe('?');
+    expect(projectIcon('constructor')).toBe(GENERIC_PROJECT_ICON);
   });
 });
