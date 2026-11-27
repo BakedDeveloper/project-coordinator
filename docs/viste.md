@@ -38,6 +38,13 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - I task **di origine GitHub** (`origin = 'github'`, oggi Nutrirea) non si spostano: stato e titolo li decide GitHub. La card mostra un lucchetto e lo spiega.
 - Dopo uno spostamento l'ordine torna a essere quello di `priority_rank`, riletto dal database.
 
+### Creare un task
+
+- Il bottone **"Nuovo task"** sopra la board apre un modulo (issue #42): progetto (solo sulla board condivisa, fra i progetti attivi), titolo, colonna di partenza (Da fare, In corso, Sospeso), importanza (di base Media), scadenza e prossima azione facoltative. Ogni campo ha la sua etichetta; Esc chiude il modulo.
+- L'app scrive solo questi campi: `origin = 'coordinator'`, le date e `last_changed_by = 'manual'` li mette il database. Dopo il salvataggio la board si rilegge.
+- Se il salvataggio non riesce, il modulo resta compilato e un messaggio lo dice.
+- I progetti lavorano questi task come gli altri (istruzione `manual_tasks` in `agent_instructions`).
+
 ### Scheda di un task
 
 - Titolo, prossima azione e le etichette "sblocca altri" (`blocks_others`), "domanda da fare" (`has_question_to_ask`, con chi: `waiting_on`), "aspetta X" e "bloccato". I task bloccati hanno il bordo tratteggiato.

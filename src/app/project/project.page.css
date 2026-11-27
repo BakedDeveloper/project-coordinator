@@ -268,3 +268,7 @@
     color: var(--color-status-blocked);
   }
 }
+
+.new-task-slot {
+  margin-bottom: 1rem;
+}

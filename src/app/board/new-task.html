@@ -1,0 +1,129 @@
+<button
+  #trigger
+  type="button"
+  class="new-task__trigger"
+  aria-controls="new-task-form"
+  [attr.aria-expanded]="open()"
+  (click)="toggle()"
+>
+  Nuovo task
+</button>
+
+@if (open()) {
+  <form
+    #form
+    id="new-task-form"
+    class="new-task"
+    aria-labelledby="new-task-title"
+    novalidate
+    (submit)="submit($event)"
+    (keydown.escape)="close()"
+  >
+    <h2 class="new-task__title" id="new-task-title">Nuovo task</h2>
+
+    @if (projectId() === null) {
+      <div class="field">
+        <label class="field__label" for="new-task-project">Progetto</label>
+        <select
+          id="new-task-project"
+          class="field__input"
+          required
+          [attr.aria-invalid]="tried() && projectMissing()"
+          [attr.aria-describedby]="tried() && projectMissing() ? 'new-task-project-error' : null"
+          (change)="chosenProject.set(value($event))"
+        >
+          <option value="" [selected]="chosenProject() === ''">Scegli un progetto</option>
+          @for (p of projects(); track p.id) {
+            <option [value]="p.id" [selected]="chosenProject() === p.id">{{ p.name }}</option>
+          }
+        </select>
+        @if (projectsError()) {
+          <p class="field__error">Non riesco a caricare i progetti.</p>
+        }
+        @if (tried() && projectMissing()) {
+          <p class="field__error" id="new-task-project-error">Scegli il progetto.</p>
+        }
+      </div>
+    }
+
+    <div class="field">
+      <label class="field__label" for="new-task-name">Titolo</label>
+      <input
+        id="new-task-name"
+        class="field__input"
+        type="text"
+        required
+        maxlength="300"
+        [value]="title()"
+        [attr.aria-invalid]="tried() && titleMissing()"
+        [attr.aria-describedby]="tried() && titleMissing() ? 'new-task-name-error' : null"
+        (input)="title.set(value($event))"
+      />
+      @if (tried() && titleMissing()) {
+        <p class="field__error" id="new-task-name-error">Scrivi il titolo.</p>
+      }
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label class="field__label" for="new-task-status">Colonna</label>
+        <select
+          id="new-task-status"
+          class="field__input"
+          (change)="status.set($any(value($event)))"
+        >
+          @for (c of startColumns; track c.value) {
+            <option [value]="c.value" [selected]="status() === c.value">{{ c.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="new-task-impact">Importanza</label>
+        <select
+          id="new-task-impact"
+          class="field__input"
+          (change)="impact.set($any(value($event)))"
+        >
+          @for (i of impacts; track i.value) {
+            <option [value]="i.value" [selected]="impact() === i.value">{{ i.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="new-task-due">Scadenza (facoltativa)</label>
+        <input
+          id="new-task-due"
+          class="field__input"
+          type="date"
+          [value]="dueDate()"
+          (input)="dueDate.set(value($event))"
+        />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="new-task-next">Prossima azione (facoltativa)</label>
+      <input
+        id="new-task-next"
+        class="field__input"
+        type="text"
+        maxlength="500"
+        [value]="nextAction()"
+        (input)="nextAction.set(value($event))"
+      />
+    </div>
+
+    @if (error(); as message) {
+      <p class="new-task__error" role="alert">{{ message }}</p>
+    }
+
+    <div class="new-task__actions">
+      <button type="submit" class="button button--primary" [disabled]="saving()">
+        {{ saving() ? 'Creo…' : 'Crea task' }}
+      </button>
+      <button type="button" class="button" (click)="close()">Annulla</button>
+    </div>
+  </form>
+}
