@@ -57,6 +57,15 @@ describe('ProjectBadge', () => {
     expect(element.querySelector('.badge__initials')).toBeNull();
   });
 
+  it('shows no initials next to a client logo when the project has no logo or icon', async () => {
+    const element = await render({ ...FLEET, logo: null, icon: null });
+
+    expect(element.querySelector('.badge__client-img')).not.toBeNull();
+    expect(element.querySelector('.badge__initials')).toBeNull();
+    expect(element.querySelector('.badge__tag')!.classList).toContain('badge__tag--text');
+    expect(element.querySelector('.badge__name')?.textContent).toBe('Fleet');
+  });
+
   it('shows the full name and the initials without logo, short name or known icon', async () => {
     const element = await render({
       ...FLEET,

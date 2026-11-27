@@ -6,7 +6,8 @@ import { initials, projectIcon } from './project-icons';
 
 /**
  * The badge of a project: for work projects the client logo on a white tile, then, in the
- * project colour, the real project logo (or a drawn icon, or the initials) and the short name.
+ * project colour, the real project logo (or a drawn icon) and the short name. The initials
+ * appear only when the badge has no logo at all.
  *
  * Screen readers get the full project name; the logo and the icon are decorative.
  */
