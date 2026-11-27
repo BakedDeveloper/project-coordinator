@@ -13,7 +13,12 @@ function setup(result: Result | Promise<never>) {
   const select = vi.fn(() => ({ maybeSingle }));
   const upsert = vi.fn(() => result);
   const from = vi.fn(() => ({ select, upsert }));
-  TestBed.configureTestingModule({ providers: [{ provide: SUPABASE, useValue: { from } }] });
+  TestBed.configureTestingModule({
+    providers: [
+      { provide: PreferencesService, useClass: PreferencesService },
+      { provide: SUPABASE, useValue: { from } },
+    ],
+  });
   return { service: TestBed.inject(PreferencesService), from, select, upsert };
 }
 
@@ -67,6 +72,49 @@ describe('PreferencesService', () => {
       await expect(offline.service.saveTheme('dark')).rejects.toBeInstanceOf(
         PreferencesUnavailableError,
       );
+    });
+  });
+
+  describe('board columns', () => {
+    it('reads the saved columns in board order, ignoring unknown ones', async () => {
+      const { service, select } = setup({
+        data: { board_columns: ['done', 'todo', 'archive'] },
+        error: null,
+      });
+      await expect(service.loadBoardColumns()).resolves.toEqual(['todo', 'done']);
+      expect(select).toHaveBeenCalledWith('board_columns');
+    });
+
+    it('returns null when nothing was chosen, so the default applies', async () => {
+      await expect(
+        setup({ data: null, error: null }).service.loadBoardColumns(),
+      ).resolves.toBeNull();
+      TestBed.resetTestingModule();
+      await expect(
+        setup({ data: { board_columns: null }, error: null }).service.loadBoardColumns(),
+      ).resolves.toBeNull();
+    });
+
+    it('upserts only board_columns, in board order', async () => {
+      const { service, upsert } = setup({ error: null });
+      await service.saveBoardColumns(['cancelled', 'todo']);
+      expect(upsert).toHaveBeenCalledWith(
+        { board_columns: ['todo', 'cancelled'] },
+        { onConflict: 'user_id' },
+      );
+    });
+
+    it('never saves an empty choice and fails without details', async () => {
+      const { service, upsert } = setup({ error: null });
+      await expect(service.saveBoardColumns([])).rejects.toBeInstanceOf(
+        PreferencesUnavailableError,
+      );
+      expect(upsert).not.toHaveBeenCalled();
+
+      TestBed.resetTestingModule();
+      const failing = setup({ data: null, error: { message: 'secret detail' } });
+      const error = await failing.service.loadBoardColumns().catch((e: unknown) => e);
+      expect(String(error)).not.toContain('secret detail');
     });
   });
 });

@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { SUPABASE } from './supabase.client';
 
 /** The statuses a task can be moved to on the board. */
-export type MovableStatus = 'todo' | 'in_progress' | 'done';
+export type MovableStatus = 'todo' | 'in_progress' | 'on_hold' | 'done' | 'cancelled';
 
 /** Raised when a task cannot be updated. It carries no database data. */
 export class TaskUpdateError extends Error {

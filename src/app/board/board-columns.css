@@ -56,8 +56,16 @@
   --column-color: var(--color-status-blocked);
 }
 
+.column[data-column='on_hold'] {
+  --column-color: var(--color-status-on-hold);
+}
+
 .column[data-column='done'] {
   --column-color: var(--color-status-done);
+}
+
+.column[data-column='cancelled'] {
+  --column-color: var(--color-text-secondary);
 }
 
 .column__header {
@@ -103,13 +111,63 @@
     display: none;
   }
 
+  /* Up to six columns: below about 13rem each the board scrolls sideways. */
   .board {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(var(--columns, 4), minmax(13rem, 1fr));
+    overflow-x: auto;
   }
 }
 
 .column__drop {
   min-height: 3rem;
+}
+
+/* Columns menu ------------------------------------------------------------ */
+
+.board-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.columns-trigger {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.columns-menu {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+}
+
+.columns-menu__legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.columns-menu__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  cursor: pointer;
 }
 
 /* Move ------------------------------------------------------------------- */

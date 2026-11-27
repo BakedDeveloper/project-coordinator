@@ -25,10 +25,10 @@ URL dell'API: `https://cmyocabucpfzsvqyvspc.supabase.co` (non è un segreto).
 
 Tabelle: `projects`, `clients`, `agent_instructions`, `features`, `tasks`, `blocks`, `waiting_items` (attese), `checkpoints`, `people`, `project_people`, `time_entries`, `inbox_items`, `activity_log`.
 
-Preferenze dell'app: `user_preferences`, una riga per utente, una colonna per preferenza con il suo controllo (oggi `theme`: `system`, `light`, `dark`). `updated_at` lo aggiorna un trigger; niente `activity_log`; nessuna cancellazione. Ogni nuova preferenza si aggiunge come colonna, con una migrazione per issue (epic #13).
+Preferenze dell'app: `user_preferences`, una riga per utente, una colonna per preferenza con il suo controllo (oggi `theme`: `system`, `light`, `dark`; `board_columns`: le colonne visibili delle board, null per quelle di base). `updated_at` lo aggiorna un trigger; niente `activity_log`; nessuna cancellazione. Ogni nuova preferenza si aggiunge come colonna, con una migrazione per issue (epic #13).
 
 Punti da sapere per l'app:
-- `tasks.status`: `todo`, `in_progress`, `done`, `cancelled`. "In attesa" e "bloccato" **non** sono stati: si ricavano da `waiting_items` e `blocks`.
+- `tasks.status`: `todo`, `in_progress`, `on_hold` (sospeso, fuori dalle priorità; migrazione `20261127130241_on_hold_and_board_columns.sql`), `done`, `cancelled`. "In attesa" e "bloccato" **non** sono stati: si ricavano da `waiting_items` e `blocks`.
 - `tasks.impact`: `high`, `medium`, `low`; serve solo a ordinare il livello 3.
 - `tasks.checkpoint_id`: il checkpoint dello stesso progetto a cui serve il task; se il checkpoint è aperto, la sua data vale come scadenza del task.
 - `tasks.position` e `tasks.estimated_hours`: ordine e stima nel piano. Oggi li ha solo Nutrirea (50 task, 275 ore, 10 ore a settimana).

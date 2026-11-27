@@ -86,6 +86,7 @@ describe('ProjectService', () => {
         }),
         taskRow({ id: 'd2', status: 'done', completed_at: null }),
       ]),
+      'v_tasks#3': ok([]),
     });
 
     const detail = await service.load(ID, SINCE);
@@ -148,8 +149,32 @@ describe('ProjectService', () => {
           completedAt: '2026-11-24T16:00:00Z',
         },
       ],
+      parkedTasks: [],
       checkpoints: [{ id: 'c1', name: 'Trasloco', dueDate: '2026-12-01' }],
     });
+  });
+
+  it('reads every task on hold or cancelled of the project, latest change first', async () => {
+    const { service, calls } = setup({
+      projects: ok(project()),
+      v_tasks: ok([]),
+      checkpoints: ok([]),
+      v_priorities: ok([]),
+      'v_tasks#3': ok([
+        taskRow({ id: 'h1', status: 'on_hold' }),
+        taskRow({ id: 'c1', status: 'cancelled', origin: 'github' }),
+        taskRow({ id: 'x', status: 'todo' }),
+      ]),
+    });
+
+    const detail = await service.load(ID, SINCE);
+
+    expect(calls['v_tasks']).toContainEqual(['in', ['status', ['on_hold', 'cancelled']]]);
+    expect(calls['v_tasks']).toContainEqual(['order', ['updated_at', { ascending: false }]]);
+    expect(detail?.parkedTasks.map((t) => [t.id, t.status, t.fromGithub])).toEqual([
+      ['h1', 'on_hold', false],
+      ['c1', 'cancelled', true],
+    ]);
   });
 
   it('leaves the rank null when v_priorities has no row (project not active)', async () => {

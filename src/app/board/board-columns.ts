@@ -11,10 +11,12 @@ import { LucideLock } from '@lucide/angular';
 
 import { TaskCard } from '../all-projects/task-card';
 import type { BoardTask } from '../data/board.service';
+import { PreferencesService } from '../data/preferences.service';
 import { TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import {
   BOARD_COLUMNS,
+  DEFAULT_VISIBLE_COLUMNS,
   moveTargets,
   withMove,
   type BoardColumn,
@@ -26,7 +28,8 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
 
 /**
  * The four board columns (docs/viste.md, "Colonne"), shared by the shared board and the
- * project board. On a phone only one column shows, chosen with the column tabs.
+ * project board. On a phone only one column shows, chosen with the column tabs. The
+ * "Colonne" menu chooses which columns to show; the choice is saved in the preferences.
  *
  * A card moves by dragging it or with its "Sposta in…" menu (keyboard and touch). The card
  * moves at once; if the database write fails it goes back and a message says so.
@@ -40,6 +43,7 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
 export class BoardColumns {
   private readonly taskService = inject(TaskService);
   private readonly clock = inject(CLOCK);
+  private readonly preferences = inject(PreferencesService);
 
   readonly columns = input.required<BoardColumn[]>();
   /** Today as an ISO date, to tell due from overdue. */
@@ -50,8 +54,19 @@ export class BoardColumns {
   /** A task changed status in the database: the page reloads to get the new order. */
   readonly moved = output<void>();
 
-  /** The column shown on a phone, where only one fits. */
+  /** Every column, for the "Colonne" menu. */
+  protected readonly allColumns = BOARD_COLUMNS;
+  /** The columns to show, in board order. */
+  protected readonly visible = signal<readonly ColumnKey[]>(DEFAULT_VISIBLE_COLUMNS);
+  protected readonly columnsMenuOpen = signal(false);
+
+  /** The column chosen on a phone, where only one fits. */
   protected readonly current = signal<ColumnKey>('todo');
+  /** The chosen phone column, or the first visible one when it was hidden. */
+  protected readonly currentKey = computed(() => {
+    const visible = this.visible();
+    return visible.includes(this.current()) ? this.current() : (visible[0] ?? 'todo');
+  });
   /** The task whose "Sposta in…" menu is open. */
   protected readonly menuFor = signal<string | null>(null);
   /** Tasks being written, shown already moved. Reset when the page gives new columns. */
@@ -68,6 +83,52 @@ export class BoardColumns {
     }
     return columns;
   });
+
+  /** The columns on screen: the visible ones, with the moves being written. */
+  protected readonly displayed = computed(() =>
+    this.shown().filter((column) => this.visible().includes(column.key)),
+  );
+
+  constructor() {
+    this.preferences.loadBoardColumns().then(
+      (saved) => {
+        if (saved !== null) {
+          this.visible.set(saved);
+        }
+      },
+      // No saved choice can be read: the default columns stay.
+      () => undefined,
+    );
+  }
+
+  protected isVisible(key: ColumnKey): boolean {
+    return this.visible().includes(key);
+  }
+
+  /** The last visible column cannot be hidden: the board would be empty. */
+  protected isLastVisible(key: ColumnKey): boolean {
+    const visible = this.visible();
+    return visible.length === 1 && visible[0] === key;
+  }
+
+  protected toggleColumn(key: ColumnKey, show: boolean): void {
+    const next = BOARD_COLUMNS.map((c) => c.key).filter((k) =>
+      k === key ? show : this.visible().includes(k),
+    );
+    if (next.length === 0) {
+      return;
+    }
+    this.visible.set(next);
+    this.preferences.saveBoardColumns(next).then(
+      () => this.error.set(null),
+      () => this.error.set('Non sono riuscito a salvare la scelta delle colonne. Riprova.'),
+    );
+  }
+
+  protected closeColumnsMenu(trigger: HTMLButtonElement): void {
+    this.columnsMenuOpen.set(false);
+    trigger.focus();
+  }
 
   /** Shown in an empty In corso: the first task of Da fare. */
   protected readonly nextToStart = computed(

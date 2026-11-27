@@ -1,16 +1,24 @@
 import type { BoardTask } from '../data/board.service';
+import type { BoardColumnKey } from '../data/preferences.service';
 import type { ProjectDetail } from '../data/project.service';
 import type { ScopeFilter } from '../all-projects/all-projects.model';
 
-export type ColumnKey = 'todo' | 'in_progress' | 'blocked' | 'done';
+export type ColumnKey = BoardColumnKey;
 
 /** The board columns, always in this order (docs/viste.md, "Colonne"). */
 export const BOARD_COLUMNS: readonly { key: ColumnKey; label: string }[] = [
   { key: 'todo', label: 'Da fare' },
   { key: 'in_progress', label: 'In corso' },
   { key: 'blocked', label: 'Bloccato' },
+  { key: 'on_hold', label: 'Sospeso' },
   { key: 'done', label: 'Fatto' },
+  { key: 'cancelled', label: 'Annullato' },
 ];
+
+/** The columns shown until Simone chooses: all but Annullato. */
+export const DEFAULT_VISIBLE_COLUMNS: readonly ColumnKey[] = BOARD_COLUMNS.map((c) => c.key).filter(
+  (key) => key !== 'cancelled',
+);
 
 /** Fatto shows the tasks completed today and in the 13 days before. */
 export const DONE_DAYS = 14;
@@ -37,10 +45,13 @@ export function doneSince(now: Date): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate() - (DONE_DAYS - 1));
 }
 
-/** A blocked open task goes to Bloccato whatever its status; done tasks always go to Fatto. */
+/**
+ * Done and cancelled tasks go to Fatto and Annullato. Any other blocked task goes to Bloccato,
+ * also when it is on hold: it still waits for another task.
+ */
 export function columnOf(task: BoardTask): ColumnKey {
-  if (task.status === 'done') {
-    return 'done';
+  if (task.status === 'done' || task.status === 'cancelled') {
+    return task.status;
   }
   return task.isBlocked ? 'blocked' : task.status;
 }
@@ -50,7 +61,7 @@ export type TargetColumn = Exclude<ColumnKey, 'blocked'>;
 
 /**
  * Where a task can be moved. GitHub tasks nowhere: GitHub decides their status. A blocked
- * task only to Fatto: in Da fare or In corso it would stay blocked, so in Bloccato.
+ * task only to Fatto or Annullato: anywhere else it would stay blocked, so in Bloccato.
  */
 export function moveTargets(task: BoardTask): TargetColumn[] {
   if (task.fromGithub) {
@@ -58,15 +69,17 @@ export function moveTargets(task: BoardTask): TargetColumn[] {
   }
   const from = columnOf(task);
   if (from === 'blocked') {
-    return ['done'];
+    return ['done', 'cancelled'];
   }
-  return (['todo', 'in_progress', 'done'] as const).filter((key) => key !== from);
+  return TARGETS.filter((key) => key !== from);
 }
+
+const TARGETS: readonly TargetColumn[] = ['todo', 'in_progress', 'on_hold', 'done', 'cancelled'];
 
 /**
  * The columns with one task moved, while the database is being written: the task goes at
- * the top of Fatto (the most recent) or at the bottom of an open column. The next reload
- * puts it back in `priority_rank` order.
+ * the top of Fatto, Sospeso and Annullato (the most recent first) or at the bottom of an open
+ * column. The next reload puts it back in `priority_rank` order.
  */
 export function withMove(
   columns: readonly BoardColumn[],
@@ -85,10 +98,10 @@ export function withMove(
   return columns.map((column) => {
     const tasks = column.tasks.filter((t) => t.id !== taskId);
     if (column.key === to) {
-      if (to === 'done') {
-        tasks.unshift(moved);
-      } else {
+      if (to === 'todo' || to === 'in_progress') {
         tasks.push(moved);
+      } else {
+        tasks.unshift(moved);
       }
     }
     return { ...column, tasks };
@@ -96,8 +109,9 @@ export function withMove(
 }
 
 /**
- * Splits the tasks into the four columns. Open columns follow `priority_rank` from the
- * database; Fatto shows the tasks completed since `since`, the most recent first.
+ * Splits the tasks into the board columns. Open columns follow `priority_rank` from the
+ * database; Fatto shows the tasks completed since `since`, the most recent first; Sospeso and
+ * Annullato keep the order of the database (latest change first).
  */
 export function buildColumns(
   tasks: readonly BoardTask[],
@@ -113,7 +127,11 @@ export function buildColumns(
 
   return BOARD_COLUMNS.map(({ key, label }) => {
     const columnTasks = visible.filter((t) => columnOf(t) === key);
-    columnTasks.sort(key === 'done' ? byCompletedAtDesc : byPriorityRank);
+    if (key === 'done') {
+      columnTasks.sort(byCompletedAtDesc);
+    } else if (key !== 'on_hold' && key !== 'cancelled') {
+      columnTasks.sort(byPriorityRank);
+    }
     return { key, label, tasks: columnTasks };
   });
 }
@@ -149,7 +167,13 @@ export function projectBoardTasks(detail: ProjectDetail): BoardTask[] {
     projectScope: project.scope,
     priorityRank: null,
   }));
-  return [...open, ...done];
+  const parked = detail.parkedTasks.map((task) => ({
+    ...task,
+    projectScope: project.scope,
+    priorityRank: null,
+    completedAt: null,
+  }));
+  return [...open, ...done, ...parked];
 }
 
 function byPriorityRank(a: BoardTask, b: BoardTask): number {

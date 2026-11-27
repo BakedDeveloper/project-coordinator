@@ -48,6 +48,7 @@
   --color-status-in-progress-text: #946200;
   --color-status-todo: #6a1f6e;
   --color-status-blocked: #c0262b;
+  --color-status-on-hold: #1f6f78;
 
   /* Horizontal lines of the project views: today and the checkpoints. */
   --color-line-today: #6b3fa0;
@@ -77,6 +78,7 @@
     --color-status-in-progress-text: #e8ad4a;
     --color-status-todo: #d9a3e6;
     --color-status-blocked: #ff8a8e;
+    --color-status-on-hold: #6cc9d2;
 
     --color-line-today: #c4a5ff;
     --color-line-checkpoint: #ff8a8e;
@@ -105,6 +107,7 @@
   --color-status-in-progress-text: #e8ad4a;
   --color-status-todo: #d9a3e6;
   --color-status-blocked: #ff8a8e;
+  --color-status-on-hold: #6cc9d2;
 
   --color-line-today: #c4a5ff;
   --color-line-checkpoint: #ff8a8e;

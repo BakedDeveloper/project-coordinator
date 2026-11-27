@@ -3,9 +3,12 @@ import { Injectable, inject } from '@angular/core';
 import type { ProjectScope } from './priorities.service';
 import { SUPABASE } from './supabase.client';
 
-export type BoardTaskStatus = 'todo' | 'in_progress' | 'done';
+export type BoardTaskStatus = 'todo' | 'in_progress' | 'on_hold' | 'done' | 'cancelled';
 
-/** One task of the shared board: open (from `v_priorities`) or recently done (from `v_tasks`). */
+/**
+ * One task of the shared board: open (from `v_priorities`), or from `v_tasks` when it has
+ * no priority: done recently, on hold (Sospeso) or cancelled (Annullato).
+ */
 export interface BoardTask {
   id: string;
   title: string;
@@ -16,7 +19,7 @@ export interface BoardTask {
   projectScope: ProjectScope;
   /** `projects.color` (dark, white text on top); null when the project has none. */
   projectColor: string | null;
-  /** From `v_priorities`; null for done tasks, which have no priority. */
+  /** From `v_priorities`; null for done, on hold and cancelled tasks, which have no priority. */
   priorityRank: number | null;
   /** ISO date (`YYYY-MM-DD`). */
   effectiveDueDate: string | null;
@@ -43,19 +46,22 @@ export class BoardUnavailableError extends Error {
 // Literal strings: supabase-js derives the row types from them.
 const OPEN_COLUMNS =
   'id, title, next_action, status, project_id, project_name, project_scope, priority_rank, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin';
+const PARKED_COLUMNS =
+  'id, title, next_action, status, project_id, project_name, project_scope, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin';
 const DONE_COLUMNS =
   'id, title, next_action, status, project_id, project_name, project_scope, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, completed_at';
 
 /**
  * Reads the shared board: the open tasks of the active projects in `priority_rank` order
- * (computed by the database, never recomputed here) and the tasks done since `doneSince`.
+ * (computed by the database, never recomputed here), the tasks done since `doneSince`, and
+ * every task on hold or cancelled, the most recently changed first.
  */
 @Injectable({ providedIn: 'root' })
 export class BoardService {
   private readonly supabase = inject(SUPABASE);
 
   async load(doneSince: Date): Promise<BoardTask[]> {
-    const [open, done, projects] = await Promise.all([
+    const [open, done, parked, projects] = await Promise.all([
       this.supabase.from('v_priorities').select(OPEN_COLUMNS).order('priority_rank'),
       this.supabase
         .from('v_tasks')
@@ -64,12 +70,18 @@ export class BoardService {
         .eq('project_status', 'active')
         .gte('completed_at', doneSince.toISOString())
         .order('completed_at', { ascending: false }),
+      this.supabase
+        .from('v_tasks')
+        .select(PARKED_COLUMNS)
+        .in('status', ['on_hold', 'cancelled'])
+        .eq('project_status', 'active')
+        .order('updated_at', { ascending: false }),
       this.supabase.from('projects').select('id, color'),
     ]).catch(() => {
       throw new BoardUnavailableError();
     });
 
-    if (open.error || done.error || projects.error) {
+    if (open.error || done.error || parked.error || projects.error) {
       throw new BoardUnavailableError();
     }
 
@@ -109,6 +121,24 @@ export class BoardService {
         status: 'done',
         priorityRank: null,
         completedAt: row.completed_at,
+      });
+    }
+
+    for (const row of parked.data) {
+      const status = row.status;
+      if (
+        row.id === null ||
+        row.project_id === null ||
+        (status !== 'on_hold' && status !== 'cancelled') ||
+        !isScope(row.project_scope)
+      ) {
+        continue;
+      }
+      tasks.push({
+        ...common(row, row.id, row.project_id, row.project_scope, colors),
+        status,
+        priorityRank: null,
+        completedAt: null,
       });
     }
 

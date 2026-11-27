@@ -64,11 +64,18 @@ export interface DoneProjectTask extends Omit<ProjectTask, 'status' | 'priorityR
   completedAt: string;
 }
 
+/** One task of the project on hold (Sospeso) or cancelled (Annullato): it has no priority. */
+export interface ParkedProjectTask extends Omit<ProjectTask, 'status' | 'priorityRank'> {
+  status: 'on_hold' | 'cancelled';
+}
+
 export interface ProjectDetail {
   project: Project;
   tasks: ProjectTask[];
   /** Tasks done since the date given to `load`, the most recent first. */
   doneTasks: DoneProjectTask[];
+  /** Every task on hold or cancelled, the most recently changed first. */
+  parkedTasks: ParkedProjectTask[];
   /** Open checkpoints only (`completed_at is null`), by date. */
   checkpoints: Checkpoint[];
 }
@@ -122,7 +129,7 @@ export class ProjectService {
       return null;
     }
 
-    const [project, tasks, checkpoints, priorities, done] = await Promise.all([
+    const [project, tasks, checkpoints, priorities, done, parked] = await Promise.all([
       this.supabase.from('projects').select(PROJECT_COLUMNS).eq('id', id).maybeSingle(),
       this.supabase
         .from('v_tasks')
@@ -143,11 +150,24 @@ export class ProjectService {
         .eq('status', 'done')
         .gte('completed_at', doneSince.toISOString())
         .order('completed_at', { ascending: false }),
+      this.supabase
+        .from('v_tasks')
+        .select(TASK_COLUMNS)
+        .eq('project_id', id)
+        .in('status', ['on_hold', 'cancelled'])
+        .order('updated_at', { ascending: false }),
     ]).catch(() => {
       throw new ProjectUnavailableError();
     });
 
-    if (project.error || tasks.error || checkpoints.error || priorities.error || done.error) {
+    if (
+      project.error ||
+      tasks.error ||
+      checkpoints.error ||
+      priorities.error ||
+      done.error ||
+      parked.error
+    ) {
       throw new ProjectUnavailableError();
     }
     if (!project.data || !isScope(project.data.scope) || !isStatus(project.data.status)) {
@@ -216,10 +236,36 @@ export class ProjectService {
       });
     }
 
+    const parkedTasks: ParkedProjectTask[] = [];
+    for (const row of parked.data) {
+      if (row.id === null || (row.status !== 'on_hold' && row.status !== 'cancelled')) {
+        continue;
+      }
+      parkedTasks.push({
+        id: row.id,
+        title: row.title ?? '',
+        nextAction: row.next_action,
+        projectId: p.id,
+        projectName: p.name,
+        projectColor: p.color,
+        status: row.status,
+        effectiveDueDate: row.effective_due_date,
+        checkpointName: row.checkpoint_name,
+        blocksOthers: row.blocks_others ?? false,
+        isBlocked: row.is_blocked ?? false,
+        isWaiting: row.is_waiting ?? false,
+        hasQuestionToAsk: row.has_question_to_ask ?? false,
+        waitingOn: row.waiting_on,
+        fromGithub: row.origin === 'github',
+        createdAt: row.created_at ?? '',
+      });
+    }
+
     return {
       project: p,
       tasks: projectTasks,
       doneTasks,
+      parkedTasks,
       checkpoints: checkpoints.data.map((c) => ({ id: c.id, name: c.name, dueDate: c.due_date })),
     };
   }
