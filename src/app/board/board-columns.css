@@ -193,7 +193,8 @@
 
 .move-error__close,
 .move__trigger,
-.move__target {
+.move__target,
+.move__delete {
   min-height: 2.5rem;
   padding: 0.25rem 0.75rem;
   border: 1px solid currentColor;
@@ -272,6 +273,16 @@
   outline: 2px dashed var(--column-color);
   outline-offset: 0.25rem;
   border-radius: 0.5rem;
+}
+
+.move__delete {
+  border-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.move__delete:hover {
+  border-color: var(--color-border);
 }
 
 .visually-hidden {

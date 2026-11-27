@@ -29,6 +29,22 @@ export class TaskUpdateError extends Error {
   }
 }
 
+/** Raised when a task cannot be deleted. It carries no database data. */
+export class TaskDeleteError extends Error {
+  constructor() {
+    super('Task delete failed');
+    this.name = 'TaskDeleteError';
+  }
+}
+
+/** Raised when a task has logged hours: the database keeps it (time_entries). */
+export class TaskHasHoursError extends TaskDeleteError {
+  constructor() {
+    super();
+    this.name = 'TaskHasHoursError';
+  }
+}
+
 /** Raised when a task cannot be created. It carries no database data. */
 export class TaskCreateError extends Error {
   constructor() {
@@ -38,7 +54,7 @@ export class TaskCreateError extends Error {
 }
 
 /**
- * Writes to tasks: the status of a task and new tasks. The database fills the rest:
+ * Writes to tasks: the status of a task, new tasks and deletions. The database fills the rest:
  * `id`, `origin = 'coordinator'`, `created_at`, `updated_at`, `completed_at` and
  * `last_changed_by = 'manual'` (CLAUDE.md, "Regole sui dati").
  */
@@ -93,7 +109,33 @@ export class TaskService {
     }
     return result.data.id;
   }
+
+  /**
+   * Deletes a task for good, with its blocks and waiting items. Never a GitHub task. A task
+   * with logged hours stays: the database refuses and this throws TaskHasHoursError.
+   */
+  async delete(id: string): Promise<void> {
+    const result = await this.supabase
+      .from('tasks')
+      .delete()
+      .eq('id', id)
+      .neq('origin', 'github')
+      .select('id')
+      .then(
+        (r) => r,
+        () => null,
+      );
+    if (result?.error?.code === FOREIGN_KEY_VIOLATION) {
+      throw new TaskHasHoursError();
+    }
+    if (result === null || result.error || result.data.length !== 1) {
+      throw new TaskDeleteError();
+    }
+  }
 }
+
+/** Postgres foreign_key_violation: here, hours logged on the task. */
+const FOREIGN_KEY_VIOLATION = '23503';
 
 function emptyToNull(value: string | null): string | null {
   const trimmed = value?.trim() ?? '';

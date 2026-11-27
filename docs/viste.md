@@ -45,6 +45,13 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - Se il salvataggio non riesce, il modulo resta compilato e un messaggio lo dice.
 - I progetti lavorano questi task come gli altri (istruzione `manual_tasks` in `agent_instructions`).
 
+### Eliminare un task
+
+- Il bottone **"Elimina"** della card apre una conferma (`<dialog>` modale) che nomina il task e ricorda che non si torna indietro; di base il focus è su Annulla, Esc chiude (issue #43).
+- Il task sparisce per sempre con i suoi blocchi e le sue attese; la cancellazione resta in `activity_log`.
+- **Un task con ore registrate non si elimina**: il database lo rifiuta (`time_entries`), la conferma lo dice e offre "Sposta in Annullato".
+- I task di origine GitHub non hanno il bottone, e la policy del database li esclude comunque.
+
 ### Scheda di un task
 
 - Titolo, prossima azione e le etichette "sblocca altri" (`blocks_others`), "domanda da fare" (`has_question_to_ask`, con chi: `waiting_on`), "aspetta X" e "bloccato". I task bloccati hanno il bordo tratteggiato.
