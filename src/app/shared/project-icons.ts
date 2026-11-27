@@ -14,6 +14,7 @@ import {
   LucideDumbbell,
   LucideFactory,
   LucideFileText,
+  LucideFolder,
   LucideGavel,
   LucideGlobe,
   LucideGraduationCap,
@@ -76,18 +77,12 @@ export const PROJECT_ICONS: Readonly<Record<string, LucideIcon>> = {
 };
 
 /** The icon for a `projects.icon` value, or null when it is missing or unknown. */
-export function projectIcon(name: string | null): LucideIcon | null {
-  return name !== null && Object.hasOwn(PROJECT_ICONS, name) ? PROJECT_ICONS[name] : null;
-}
+/** The icon of a project without a logo or a known icon. */
+export const GENERIC_PROJECT_ICON: LucideIcon = LucideFolder;
 
-/** Up to two initials from the name: "Reply - Fleet" → "RF", "Nutrirea" → "NU". */
-export function initials(name: string): string {
-  const words = name.split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 0);
-  if (words.length === 0) {
-    return '?';
-  }
-  if (words.length === 1) {
-    return words[0].slice(0, 2).toUpperCase();
-  }
-  return (words[0][0] + words[1][0]).toUpperCase();
+/** The icon for a name from `projects.icon`; the generic icon when the name is unknown. */
+export function projectIcon(name: string | null): LucideIcon {
+  return name !== null && Object.hasOwn(PROJECT_ICONS, name)
+    ? PROJECT_ICONS[name]
+    : GENERIC_PROJECT_ICON;
 }

@@ -62,7 +62,7 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 ### Icona del progetto
 
 - Ogni progetto ha un'**icona disegnata** presa da una libreria (proposta: Lucide, da confermare nella sua issue). Nel database se ne salva il nome (`projects.icon`).
-- Se l'icona manca o il nome è sconosciuto, al suo posto ci sono le **iniziali** del progetto sul suo colore.
+- Se l'icona manca o il nome è sconosciuto, al suo posto c'è un'**icona generica** (una cartella): mai le iniziali (issue #50).
 - L'icona è decorativa: il testo per i lettori di schermo resta il nome del progetto.
 
 ### Sfondo

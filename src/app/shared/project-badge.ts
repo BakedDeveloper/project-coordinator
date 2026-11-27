@@ -2,12 +2,12 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { LucideDynamicIcon } from '@lucide/angular';
 
 import { BadgeService, type ProjectBadgeData } from '../data/badge.service';
-import { initials, projectIcon } from './project-icons';
+import { projectIcon } from './project-icons';
 
 /**
  * The badge of a project: for work projects the client logo on a white tile, then, in the
- * project colour, the real project logo (or a drawn icon) and the short name. The initials
- * appear only when the badge has no logo at all.
+ * project colour, the real project logo (or its drawn icon, or a generic one) and the short
+ * name. Never initials.
  *
  * Screen readers get the full project name; the logo and the icon are decorative.
  */
@@ -36,13 +36,13 @@ export class ProjectBadge {
   protected readonly shortened = computed(() => this.label() !== this.name());
   protected readonly logo = computed(() => this.badge()?.logo ?? null);
   protected readonly clientLogo = computed(() => this.badge()?.clientLogo ?? null);
+  /** The project icon, else the generic one: never initials. */
   protected readonly icon = computed(() => projectIcon(this.badge()?.icon ?? null));
-  protected readonly initials = computed(() => initials(this.label()));
 
   constructor() {
     this.badges.badges().then(
       (all) => this.all.set(all),
-      // No badge data: the badge stays a coloured tag with the name and its initials.
+      // No badge data: the badge stays a coloured tag with the name and the generic icon.
       () => undefined,
     );
   }
