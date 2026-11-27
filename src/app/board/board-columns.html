@@ -35,6 +35,16 @@
           >{{ column.tasks.length }} task</span
         >
       </h2>
+      @if (showProject() && column.tasks.length > 0) {
+        <button
+          type="button"
+          class="column__group"
+          [attr.aria-pressed]="isGrouped(column.key)"
+          (click)="toggleGrouped(column.key)"
+        >
+          Raggruppa per progetto<span class="visually-hidden"> in {{ column.label }}</span>
+        </button>
+      }
 
       <div
         class="column__drop"
@@ -58,74 +68,85 @@
           </ul>
         }
         @if (column.tasks.length > 0) {
-          <ol class="column__list">
-            @for (task of column.tasks; track task.id) {
-              <li
-                class="item"
-                cdkDrag
-                [cdkDragData]="task"
-                [cdkDragDisabled]="!canDrag(task)"
-                [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
-                cdkDragPreviewContainer="parent"
-              >
-                <app-task-card
-                  [task]="task"
-                  [today]="today()"
-                  [showProject]="showProject()"
-                  [doneAt]="task.completedAt"
-                />
-
-                @if (task.fromGithub) {
-                  <p class="move__locked">
-                    <svg class="move__lock" lucideLock aria-hidden="true"></svg>
-                    Lo stato lo decide GitHub: chiudi o riapri la issue.
-                  </p>
-                } @else if (isPending(task)) {
-                  <p class="move__pending" role="status">Salvo…</p>
-                } @else if (targets(task); as targetList) {
-                  @if (targetList.length > 0) {
-                    <div class="move">
-                      <button
-                        #trigger
-                        type="button"
-                        class="move__trigger"
-                        [attr.aria-expanded]="menuFor() === task.id"
-                        [attr.aria-controls]="'move-' + task.id"
-                        (click)="toggleMenu(task)"
-                        (keydown.escape)="closeMenu(trigger)"
-                      >
-                        Sposta in…<span class="visually-hidden"> {{ task.title }}</span>
-                      </button>
-                      <button
-                        #deleteTrigger
-                        type="button"
-                        class="move__delete"
-                        (click)="askDelete(task, deleteTrigger)"
-                      >
-                        Elimina<span class="visually-hidden"> {{ task.title }}</span>
-                      </button>
-                      @if (menuFor() === task.id) {
-                        <ul class="move__menu" [id]="'move-' + task.id">
-                          @for (target of targetList; track target.key) {
-                            <li>
-                              <button
-                                type="button"
-                                class="move__target"
-                                (click)="chooseTarget(task, target.key)"
-                                (keydown.escape)="closeMenu(trigger)"
-                              >
-                                {{ target.label }}
-                              </button>
-                            </li>
-                          }
-                        </ul>
-                      }
-                    </div>
-                  }
-                }
-              </li>
+          @for (section of sections(column); track section.key) {
+            @if (section.group; as group) {
+              <app-project-group
+                [group]="group"
+                [expanded]="isExpanded(column.key, group.projectId)"
+                (toggled)="toggleExpanded(column.key, group.projectId)"
+              />
             }
-          </ol>
+            @if (!section.group || isExpanded(column.key, section.key)) {
+              <ol class="column__list">
+                @for (task of section.tasks; track task.id) {
+                  <li
+                    class="item"
+                    cdkDrag
+                    [cdkDragData]="task"
+                    [cdkDragDisabled]="!canDrag(task)"
+                    [cdkDragStartDelay]="{ touch: 250, mouse: 0 }"
+                    cdkDragPreviewContainer="parent"
+                  >
+                    <app-task-card
+                      [task]="task"
+                      [today]="today()"
+                      [showProject]="showProject()"
+                      [doneAt]="task.completedAt"
+                    />
+
+                    @if (task.fromGithub) {
+                      <p class="move__locked">
+                        <svg class="move__lock" lucideLock aria-hidden="true"></svg>
+                        Lo stato lo decide GitHub: chiudi o riapri la issue.
+                      </p>
+                    } @else if (isPending(task)) {
+                      <p class="move__pending" role="status">Salvo…</p>
+                    } @else if (targets(task); as targetList) {
+                      @if (targetList.length > 0) {
+                        <div class="move">
+                          <button
+                            #trigger
+                            type="button"
+                            class="move__trigger"
+                            [attr.aria-expanded]="menuFor() === task.id"
+                            [attr.aria-controls]="'move-' + task.id"
+                            (click)="toggleMenu(task)"
+                            (keydown.escape)="closeMenu(trigger)"
+                          >
+                            Sposta in…<span class="visually-hidden"> {{ task.title }}</span>
+                          </button>
+                          <button
+                            #deleteTrigger
+                            type="button"
+                            class="move__delete"
+                            (click)="askDelete(task, deleteTrigger)"
+                          >
+                            Elimina<span class="visually-hidden"> {{ task.title }}</span>
+                          </button>
+                          @if (menuFor() === task.id) {
+                            <ul class="move__menu" [id]="'move-' + task.id">
+                              @for (target of targetList; track target.key) {
+                                <li>
+                                  <button
+                                    type="button"
+                                    class="move__target"
+                                    (click)="chooseTarget(task, target.key)"
+                                    (keydown.escape)="closeMenu(trigger)"
+                                  >
+                                    {{ target.label }}
+                                  </button>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      }
+                    }
+                  </li>
+                }
+              </ol>
+            }
+          }
         } @else if (column.key === 'in_progress' && nextToStart(); as next) {
           <p class="column__empty">
             Niente in corso. Il prossimo da iniziare: <strong>{{ next.title }}</strong>

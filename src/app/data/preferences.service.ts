@@ -114,4 +114,36 @@ export class PreferencesService {
       throw new PreferencesUnavailableError();
     }
   }
+
+  /** The board columns grouped by project, in board order; null when never chosen. */
+  async loadGroupedColumns(): Promise<BoardColumnKey[] | null> {
+    let result;
+    try {
+      result = await this.supabase.from('user_preferences').select('grouped_columns').maybeSingle();
+    } catch {
+      throw new PreferencesUnavailableError();
+    }
+    if (result.error) {
+      throw new PreferencesUnavailableError();
+    }
+    const saved = result.data?.grouped_columns ?? null;
+    // Empty is a choice too: no column grouped.
+    return saved === null ? null : BOARD_COLUMN_KEYS.filter((key) => saved.includes(key));
+  }
+
+  /** Saves the board columns grouped by project (possibly none), in board order. */
+  async saveGroupedColumns(columns: readonly BoardColumnKey[]): Promise<void> {
+    const keys = BOARD_COLUMN_KEYS.filter((key) => columns.includes(key));
+    let result;
+    try {
+      result = await this.supabase
+        .from('user_preferences')
+        .upsert({ grouped_columns: keys }, { onConflict: 'user_id' });
+    } catch {
+      throw new PreferencesUnavailableError();
+    }
+    if (result.error) {
+      throw new PreferencesUnavailableError();
+    }
+  }
 }

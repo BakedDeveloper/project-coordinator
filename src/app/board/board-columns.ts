@@ -24,6 +24,7 @@ import { TaskCard } from '../all-projects/task-card';
 import { ColumnsMenu } from './columns-menu';
 import { DeleteDialog } from './delete-dialog';
 import { PausedProjectEntry } from './paused-project';
+import { ProjectGroup } from './project-group';
 import type { BoardTask, PausedProject } from '../data/board.service';
 import { ProjectService } from '../data/project.service';
 import { PreferencesService } from '../data/preferences.service';
@@ -31,13 +32,23 @@ import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import {
   BOARD_COLUMNS,
+  DEFAULT_GROUPED_COLUMNS,
   DEFAULT_VISIBLE_COLUMNS,
+  groupByProject,
   moveTargets,
   withMove,
   type BoardColumn,
   type ColumnKey,
   type TargetColumn,
+  type TaskGroup,
 } from './board.model';
+
+/** A list inside a column: all its tasks, or the tasks of one project. */
+interface Section {
+  key: string;
+  group: TaskGroup | null;
+  tasks: BoardTask[];
+}
 
 const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
 
@@ -60,6 +71,7 @@ const LABELS = new Map(BOARD_COLUMNS.map((c) => [c.key, c.label]));
     DeleteDialog,
     PausedProjectEntry,
     ColumnsMenu,
+    ProjectGroup,
   ],
   templateUrl: './board-columns.html',
   styleUrl: './board-columns.css',
@@ -84,6 +96,12 @@ export class BoardColumns {
 
   /** The columns to show, in board order. */
   protected readonly visible = signal<readonly ColumnKey[]>(DEFAULT_VISIBLE_COLUMNS);
+
+  /** The columns grouped by project (only on the shared board). */
+  protected readonly grouped = signal<readonly ColumnKey[]>(DEFAULT_GROUPED_COLUMNS);
+
+  /** The open project cards of the grouped columns, as `column:project`. Closed by default. */
+  private readonly expanded = signal<ReadonlySet<string>>(new Set());
 
   /** The column chosen on a phone, where only one fits. */
   protected readonly current = signal<ColumnKey>('todo');
@@ -143,6 +161,60 @@ export class BoardColumns {
       // No saved choice can be read: the default columns stay.
       () => undefined,
     );
+    this.preferences.loadGroupedColumns().then(
+      (saved) => {
+        if (saved !== null) {
+          this.grouped.set(saved);
+        }
+      },
+      () => undefined,
+    );
+  }
+
+  protected isGrouped(key: ColumnKey): boolean {
+    return this.grouped().includes(key);
+  }
+
+  protected toggleGrouped(key: ColumnKey): void {
+    const next = BOARD_COLUMNS.map((c) => c.key).filter((k) =>
+      k === key ? !this.isGrouped(key) : this.isGrouped(k),
+    );
+    this.grouped.set(next);
+    this.preferences.saveGroupedColumns(next).then(
+      () => this.error.set(null),
+      () => this.error.set('Non sono riuscito a salvare il raggruppamento. Riprova.'),
+    );
+  }
+
+  /**
+   * The lists of a column: when it is grouped (only on the shared board, where cards of
+   * several projects meet) one card per project, closed until Simone opens it; else a single
+   * list.
+   */
+  protected sections(column: BoardColumn): Section[] {
+    if (!this.showProject() || !this.isGrouped(column.key)) {
+      return [{ key: column.key, group: null, tasks: column.tasks }];
+    }
+    return groupByProject(column.tasks).map((group) => ({
+      key: group.projectId,
+      group,
+      tasks: group.tasks,
+    }));
+  }
+
+  protected isExpanded(column: ColumnKey, projectId: string): boolean {
+    return this.expanded().has(`${column}:${projectId}`);
+  }
+
+  protected toggleExpanded(column: ColumnKey, projectId: string): void {
+    const key = `${column}:${projectId}`;
+    this.expanded.update((open) => {
+      const next = new Set(open);
+      if (!next.delete(key)) {
+        next.add(key);
+      }
+      return next;
+    });
   }
 
   protected toggleColumn(key: ColumnKey, show: boolean): void {

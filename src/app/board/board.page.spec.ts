@@ -100,8 +100,10 @@ describe('BoardPage', () => {
   });
 
   it('shows the completion day on done cards instead of the due date', async () => {
-    const { element } = await setup(async () => TASKS);
+    const { element, click } = await setup(async () => TASKS);
 
+    // Fatto starts as one closed card per project: open it.
+    await click(column(element, 'done').querySelector<HTMLButtonElement>('.group')!);
     expect(column(element, 'done').querySelector('.card__done')?.textContent).toBe(
       'fatto il 24 nov',
     );

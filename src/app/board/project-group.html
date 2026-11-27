@@ -1,0 +1,7 @@
+<button type="button" class="group" [attr.aria-expanded]="expanded()" (click)="toggled.emit()">
+  <app-project-badge
+    [projectId]="group().projectId"
+    [name]="group().projectName"
+    [color]="color()"
+  />&ngsp;<span class="group__count">{{ count() }}</span>
+</button>

@@ -29,6 +29,13 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - `v_priorities` contiene solo i task aperti dei progetti attivi: i task fatti si leggono da `v_tasks`.
 - Ogni colonna mostra nell'intestazione quanti task contiene; se è vuota lo dice.
 
+### Raggruppare per progetto
+
+- Ogni colonna della board condivisa ha il bottone **"Raggruppa per progetto"** (`aria-pressed`, issue #52). Raggruppata, la colonna mostra **una scheda per progetto** (badge e numero di task), chiusa: si apre con un clic o da tastiera e mostra i task di quel progetto.
+- Le schede seguono l'ordine della colonna: in Fatto prima il progetto con il task finito più di recente, nelle colonne aperte prima quello con la priorità più alta.
+- Di base è raggruppata solo **Fatto**; le altre colonne partono con le card una per una. La scelta si salva in `user_preferences.grouped_columns` e vale su ogni dispositivo; le schede aperte no.
+- Sulla board di un progetto non c'è niente da raggruppare: il bottone non compare.
+
 ### Spostare i task
 
 - Si cambia stato trascinando una card fra Da fare, In corso, Sospeso, Fatto e Annullato (`@angular/cdk`), oppure con il bottone **"Sposta in…"** della card, che funziona da tastiera e su telefono. Il menu offre anche le colonne nascoste.

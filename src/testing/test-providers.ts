@@ -22,6 +22,8 @@ const providers: Provider[] = [
       saveTheme: () => Promise.resolve(),
       loadBoardColumns: () => Promise.resolve(null),
       saveBoardColumns: () => Promise.resolve(),
+      loadGroupedColumns: () => Promise.resolve(null),
+      saveGroupedColumns: () => Promise.resolve(),
     },
   },
 ];
