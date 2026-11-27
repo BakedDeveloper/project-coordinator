@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { ProjectService, ProjectUnavailableError } from './project.service';
+import { ProjectService, ProjectUnavailableError, ProjectUpdateError } from './project.service';
 import { SUPABASE } from './supabase.client';
 
 interface Result {
@@ -27,7 +27,7 @@ function setup(results: Record<string, Result | 'reject'>) {
     const builder: Record<string, unknown> = {
       then: (ok: (r: unknown) => unknown, ko: (e: unknown) => unknown) => settle().then(ok, ko),
     };
-    for (const method of ['select', 'eq', 'in', 'is', 'gte', 'order']) {
+    for (const method of ['select', 'update', 'eq', 'in', 'is', 'gte', 'order']) {
       builder[method] = (...args: unknown[]) => {
         calls[table].push([method, args]);
         return builder;
@@ -258,6 +258,31 @@ describe('ProjectService', () => {
       const { service } = setup({ projects: 'reject' });
 
       await expect(service.list()).rejects.toBeInstanceOf(ProjectUnavailableError);
+    });
+  });
+
+  describe('setStatus', () => {
+    it('suspends or resumes only the status, only between active and paused', async () => {
+      const { service, calls } = setup({ projects: ok([{ id: ID }]) });
+
+      await service.setStatus(ID, 'paused');
+
+      expect(calls['projects']).toEqual([
+        ['update', [{ status: 'paused' }]],
+        ['eq', ['id', ID]],
+        ['in', ['status', ['active', 'paused']]],
+        ['select', ['id']],
+      ]);
+    });
+
+    it('fails when nothing changed (e.g. a closed project), on an error or offline', async () => {
+      await expect(
+        setup({ projects: ok([]) }).service.setStatus(ID, 'active'),
+      ).rejects.toBeInstanceOf(ProjectUpdateError);
+      TestBed.resetTestingModule();
+      await expect(
+        setup({ projects: 'reject' }).service.setStatus(ID, 'active'),
+      ).rejects.toBeInstanceOf(ProjectUpdateError);
     });
   });
 });

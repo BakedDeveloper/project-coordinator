@@ -1,32 +1,5 @@
 <div class="board-tools">
-  <button
-    #columnsTrigger
-    type="button"
-    class="columns-trigger"
-    aria-controls="board-columns-menu"
-    [attr.aria-expanded]="columnsMenuOpen()"
-    (click)="columnsMenuOpen.set(!columnsMenuOpen())"
-    (keydown.escape)="closeColumnsMenu(columnsTrigger)"
-  >
-    Colonne
-  </button>
-  @if (columnsMenuOpen()) {
-    <fieldset class="columns-menu" id="board-columns-menu">
-      <legend class="columns-menu__legend">Colonne da mostrare</legend>
-      @for (column of allColumns; track column.key) {
-        <label class="columns-menu__option">
-          <input
-            type="checkbox"
-            [checked]="isVisible(column.key)"
-            [disabled]="isLastVisible(column.key)"
-            (change)="toggleColumn(column.key, $any($event.target).checked)"
-            (keydown.escape)="closeColumnsMenu(columnsTrigger)"
-          />
-          {{ column.label }}
-        </label>
-      }
-    </fieldset>
-  }
+  <app-columns-menu [visible]="visible()" (toggled)="toggleColumn($event.key, $event.show)" />
 </div>
 
 <div class="column-tabs" role="group" aria-label="Colonna da mostrare">
@@ -71,6 +44,19 @@
         [cdkDropListSortingDisabled]="true"
         (cdkDropListDropped)="dropped($event)"
       >
+        @if (column.key === 'on_hold' && pausedProjects().length > 0) {
+          <ul class="column__list" aria-label="Progetti sospesi">
+            @for (p of pausedProjects(); track p.id) {
+              <li>
+                <app-paused-project
+                  [project]="p"
+                  [busy]="resuming() === p.id"
+                  (resumeProject)="resume($event)"
+                />
+              </li>
+            }
+          </ul>
+        }
         @if (column.tasks.length > 0) {
           <ol class="column__list">
             @for (task of column.tasks; track task.id) {
@@ -144,7 +130,7 @@
           <p class="column__empty">
             Niente in corso. Il prossimo da iniziare: <strong>{{ next.title }}</strong>
           </p>
-        } @else {
+        } @else if (column.key !== 'on_hold' || pausedProjects().length === 0) {
           <p class="column__empty">Nessun task.</p>
         }
       </div>

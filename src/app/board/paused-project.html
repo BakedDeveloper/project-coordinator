@@ -1,0 +1,15 @@
+<article class="paused">
+  <a class="paused__project" [routerLink]="['/progetti', project().id]">
+    <app-project-badge [projectId]="project().id" [name]="project().name" [color]="color()" />
+  </a>
+  <p class="paused__text">Progetto sospeso · {{ count() }}</p>
+  <button
+    type="button"
+    class="paused__resume"
+    [disabled]="busy()"
+    (click)="resumeProject.emit(project())"
+  >
+    {{ busy() ? 'Riprendo…' : 'Riprendi'
+    }}<span class="visually-hidden"> {{ project().name }}</span>
+  </button>
+</article>

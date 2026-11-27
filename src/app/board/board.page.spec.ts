@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { routes } from '../app.routes';
-import { BoardService, type BoardTask } from '../data/board.service';
+import { BoardService, type BoardTask, type PausedProject } from '../data/board.service';
 import { CLOCK } from '../shared/clock';
 import { boardTask } from '../../testing/board-task.fixture';
 import { BoardPage } from './board.page';
@@ -28,8 +28,11 @@ const TASKS: BoardTask[] = [
   }),
 ];
 
-async function setup(load: () => Promise<BoardTask[]>) {
-  const board = { load: vi.fn(load) };
+async function setup(
+  load: () => Promise<BoardTask[]>,
+  pausedProjects: () => Promise<PausedProject[]> = () => Promise.resolve([]),
+) {
+  const board = { load: vi.fn(load), pausedProjects: vi.fn(pausedProjects) };
   await TestBed.configureTestingModule({
     imports: [BoardPage],
     providers: [

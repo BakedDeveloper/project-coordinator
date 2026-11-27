@@ -181,3 +181,49 @@ describe('BoardService', () => {
     await expect(offline.service.load(SINCE)).rejects.toBeInstanceOf(BoardUnavailableError);
   });
 });
+
+describe('BoardService.pausedProjects', () => {
+  function setupPaused(projects: Result, tasks: Result) {
+    const results: Record<string, ReturnType<typeof query>> = {
+      projects: query(projects),
+      v_tasks: query(tasks),
+    };
+    const from = vi.fn((table: string) => results[table].builder);
+    TestBed.configureTestingModule({ providers: [{ provide: SUPABASE, useValue: { from } }] });
+    return { service: TestBed.inject(BoardService), results };
+  }
+
+  it('lists the paused projects with their open tasks counted', async () => {
+    const { service, results } = setupPaused(
+      {
+        data: [
+          { id: 'p1', name: 'Casa', scope: 'personal', color: null },
+          { id: 'p2', name: 'Fermo', scope: 'work', color: '#2f5f93' },
+          { id: 'p3', name: 'Strano', scope: 'other', color: null },
+        ],
+        error: null,
+      },
+      { data: [{ project_id: 'p1' }, { project_id: 'p1' }, { project_id: null }], error: null },
+    );
+
+    expect(await service.pausedProjects()).toEqual([
+      { id: 'p1', name: 'Casa', scope: 'personal', color: null, openTasks: 2 },
+      { id: 'p2', name: 'Fermo', scope: 'work', color: '#2f5f93', openTasks: 0 },
+    ]);
+    expect(results['projects'].calls).toContainEqual(['eq', 'status', 'paused']);
+    expect(results['v_tasks'].calls).toEqual(
+      expect.arrayContaining([
+        ['eq', 'project_status', 'paused'],
+        ['in', 'status', ['todo', 'in_progress', 'on_hold']],
+      ]),
+    );
+  });
+
+  it('fails without details when a query fails', async () => {
+    const { service } = setupPaused(
+      { data: null, error: { message: 'secret detail' } },
+      { data: [], error: null },
+    );
+    await expect(service.pausedProjects()).rejects.toBeInstanceOf(BoardUnavailableError);
+  });
+});

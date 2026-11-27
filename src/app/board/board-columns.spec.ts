@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 import { boardTask } from '../../testing/board-task.fixture';
 import type { BoardTask } from '../data/board.service';
 import { PreferencesService, type BoardColumnKey } from '../data/preferences.service';
+import { ProjectService } from '../data/project.service';
 import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
 import { BoardColumns } from './board-columns';
@@ -25,6 +26,7 @@ async function render(
     saveBoardColumns: vi.fn(() => Promise.resolve()),
   },
   remove = vi.fn(() => Promise.resolve()),
+  setProjectStatus = vi.fn(() => Promise.resolve()),
 ) {
   await TestBed.configureTestingModule({
     imports: [BoardColumns],
@@ -32,6 +34,7 @@ async function render(
       provideRouter([]),
       { provide: TaskService, useValue: { setStatus, delete: remove } },
       { provide: PreferencesService, useValue: preferences },
+      { provide: ProjectService, useValue: { setStatus: setProjectStatus } },
       { provide: CLOCK, useValue: () => NOW },
     ],
   }).compileComponents();
@@ -46,7 +49,7 @@ async function render(
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   document.body.appendChild(element);
-  return { fixture, element, setStatus, moved, preferences, remove };
+  return { fixture, element, setStatus, moved, preferences, remove, setProjectStatus };
 }
 
 function shownColumns(element: HTMLElement): string[] {
@@ -150,6 +153,31 @@ describe('BoardColumns', () => {
     expect(element.querySelector('dialog')!.hasAttribute('open')).toBe(false);
     expect(remove).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('shows a suspended project at the top of Sospeso and resumes it', async () => {
+    const { fixture, element, moved, setProjectStatus } = await render([
+      boardTask({ id: 'h1', title: 'Messo da parte', status: 'on_hold', priorityRank: null }),
+    ]);
+    fixture.componentRef.setInput('pausedProjects', [
+      { id: 'p9', name: 'Casa', scope: 'personal', color: null, openTasks: 3 },
+    ]);
+    await fixture.whenStable();
+
+    const onHold = element.querySelector('[data-column="on_hold"]')!;
+    const entry = onHold.querySelector('app-paused-project')!;
+    expect(entry.textContent).toContain('Progetto sospeso · 3 task aperti');
+    // The entry comes before the tasks of the column.
+    expect(
+      entry.compareDocumentPosition(onHold.querySelector('.card__title')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    button(entry as HTMLElement, 'Riprendi').click();
+    await fixture.whenStable();
+
+    expect(setProjectStatus).toHaveBeenCalledWith('p9', 'active');
+    expect(moved).toHaveBeenCalledTimes(1);
   });
 
   it('offers no delete for a GitHub task', async () => {

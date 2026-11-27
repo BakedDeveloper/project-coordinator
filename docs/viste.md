@@ -38,6 +38,13 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - I task **di origine GitHub** (`origin = 'github'`, oggi Nutrirea) non si spostano: stato e titolo li decide GitHub. La card mostra un lucchetto e lo spiega.
 - Dopo uno spostamento l'ordine torna a essere quello di `priority_rank`, riletto dal database.
 
+### Sospendere un progetto
+
+- Il bottone **"Sospendi progetto"** nella pagina del progetto mette `projects.status = 'paused'` (issue #46); **"Riprendi progetto"** lo rimette `active`. Gli stati dei task non cambiano: alla ripresa ogni task torna dov'era.
+- I task di un progetto sospeso escono da tutte le colonne della board condivisa e dalle priorità (le letture prendono solo i progetti attivi).
+- In cima alla colonna **Sospeso** c'è una voce per ogni progetto sospeso: badge con il link al progetto, numero di task aperti, bottone **"Riprendi"**. Segue i filtri di ambito e progetto.
+- Nella pagina di un progetto sospeso un avviso lo dice; i task restano visibili sulla sua board, in ordine di creazione. Un progetto chiuso non si sospende né si riprende.
+
 ### Creare un task
 
 - Il bottone **"Nuovo task"** sopra la board apre un modulo (issue #42): progetto (solo sulla board condivisa, fra i progetti attivi), titolo, colonna di partenza (Da fare, In corso, Sospeso), importanza (di base Media), scadenza e prossima azione facoltative. Ogni campo ha la sua etichetta; Esc chiude il modulo.

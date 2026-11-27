@@ -1,0 +1,28 @@
+<button
+  #trigger
+  type="button"
+  class="columns-trigger"
+  aria-controls="board-columns-menu"
+  [attr.aria-expanded]="open()"
+  (click)="open.set(!open())"
+  (keydown.escape)="close(trigger)"
+>
+  Colonne
+</button>
+@if (open()) {
+  <fieldset class="columns-menu" id="board-columns-menu">
+    <legend class="columns-menu__legend">Colonne da mostrare</legend>
+    @for (column of columns; track column.key) {
+      <label class="columns-menu__option">
+        <input
+          type="checkbox"
+          [checked]="isVisible(column.key)"
+          [disabled]="isLastVisible(column.key)"
+          (change)="toggled.emit({ key: column.key, show: $any($event.target).checked })"
+          (keydown.escape)="close(trigger)"
+        />
+        {{ column.label }}
+      </label>
+    }
+  </fieldset>
+}
