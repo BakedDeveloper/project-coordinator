@@ -1,0 +1,94 @@
+:host {
+  display: block;
+}
+
+/*
+ * Compact card: same height for every card (two title lines at most), a stripe of the
+ * project colour on the left and a light tint of it (at most 10%, see task-card.css for the
+ * contrast bound).
+ */
+.card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.375rem;
+  width: 100%;
+  height: 7.25rem;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--project-color, var(--color-border));
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--project-color, transparent) 10%, var(--color-surface));
+  color: var(--color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* On a project board there is no badge: a shorter card, still all the same. */
+.card--no-project {
+  grid-template-rows: 1fr auto;
+  height: 5.25rem;
+}
+
+.card--blocked {
+  border: 2px dashed var(--color-status-blocked);
+  border-left: 4px solid var(--project-color, var(--color-status-blocked));
+}
+
+.card__project {
+  display: flex;
+  min-width: 0;
+}
+
+.card__title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 1.25rem;
+}
+
+.card__date {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.card__date--overdue {
+  color: var(--color-status-blocked);
+  font-weight: 600;
+}
+
+.card__signals {
+  display: inline-flex;
+  gap: 0.375rem;
+  margin-left: auto;
+  color: var(--color-text-secondary);
+}
+
+.signal {
+  width: 1rem;
+  height: 1rem;
+}
+
+.signal--blocked {
+  color: var(--color-status-blocked);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

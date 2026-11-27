@@ -2,6 +2,7 @@ import type { Provider } from '@angular/core';
 
 import { BadgeService } from '../app/data/badge.service';
 import { PreferencesService } from '../app/data/preferences.service';
+import { TaskDetailService } from '../app/data/task-detail.service';
 import { TaskService } from '../app/data/task.service';
 
 /**
@@ -15,6 +16,7 @@ import { TaskService } from '../app/data/task.service';
 const providers: Provider[] = [
   { provide: BadgeService, useValue: { badges: () => Promise.resolve(new Map()) } },
   { provide: TaskService, useValue: { setStatus: () => Promise.resolve() } },
+  { provide: TaskDetailService, useValue: { load: () => Promise.resolve(null) } },
   {
     provide: PreferencesService,
     useValue: {

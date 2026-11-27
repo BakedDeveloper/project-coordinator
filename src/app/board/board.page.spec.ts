@@ -56,7 +56,9 @@ async function setup(
 const column = (element: HTMLElement, key: string) =>
   element.querySelector<HTMLElement>(`[data-column="${key}"]`)!;
 const titles = (element: HTMLElement, key: string) =>
-  Array.from(column(element, key).querySelectorAll('h3')).map((h) => h.textContent);
+  Array.from(column(element, key).querySelectorAll('.card__title')).map((h) =>
+    h.textContent?.trim(),
+  );
 const header = (element: HTMLElement, key: string) =>
   column(element, key).querySelector('h2')!.textContent!.replace(/\s+/g, ' ').trim();
 
@@ -104,7 +106,7 @@ describe('BoardPage', () => {
 
     // Fatto starts as one closed card per project: open it.
     await click(column(element, 'done').querySelector<HTMLButtonElement>('.group')!);
-    expect(column(element, 'done').querySelector('.card__done')?.textContent).toBe(
+    expect(column(element, 'done').querySelector('.card__date')?.textContent).toBe(
       'fatto il 24 nov',
     );
   });

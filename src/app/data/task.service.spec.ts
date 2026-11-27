@@ -144,4 +144,37 @@ describe('TaskService', () => {
       expect(error).not.toBeInstanceOf(TaskHasHoursError);
     });
   });
+
+  describe('update', () => {
+    it('writes only the edited fields, trimmed', async () => {
+      const { service, calls } = setup({ data: [{ id: 't1' }], error: null });
+
+      await service.update('t1', { title: ' Nuovo ', nextAction: '  ', impact: 'low' }, false);
+
+      expect(calls).toContainEqual([
+        'update',
+        { title: 'Nuovo', next_action: null, impact: 'low' },
+      ]);
+      expect(calls).toContainEqual(['eq', 'id', 't1']);
+    });
+
+    it('never sends the title of a GitHub task', async () => {
+      const { service, calls } = setup({ data: [{ id: 'g1' }], error: null });
+
+      await service.update('g1', { title: 'Altro', description: 'Note' }, true);
+
+      expect(calls).toContainEqual(['update', { description: 'Note' }]);
+    });
+
+    it('refuses an empty title and fails when nothing changed', async () => {
+      const { service, from } = setup({ data: [], error: null });
+      await expect(service.update('t1', { title: ' ' }, false)).rejects.toBeInstanceOf(
+        TaskUpdateError,
+      );
+      expect(from).not.toHaveBeenCalled();
+      await expect(service.update('t1', { dueDate: null }, false)).rejects.toBeInstanceOf(
+        TaskUpdateError,
+      );
+    });
+  });
 });
