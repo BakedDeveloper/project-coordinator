@@ -43,7 +43,7 @@ comment on column public.tasks.source_note is
 
 -- 2. Raggruppamenti sommabili ----------------------------------------
 
-create function public.is_valid_column_grouping(grouping jsonb)
+create function public.is_valid_column_grouping(levels_by_column jsonb)
 returns boolean
 language sql
 immutable
@@ -52,10 +52,10 @@ as $$
   -- The case expressions keep jsonb_each and jsonb_array_elements away from
   -- values of the wrong type: "or" does not promise to stop at the first true.
   select case
-    when jsonb_typeof(grouping) <> 'object' then false
+    when jsonb_typeof(levels_by_column) <> 'object' then false
     else not exists (
       select 1
-        from jsonb_each(grouping) as e(column_key, levels)
+        from jsonb_each(levels_by_column) as e(column_key, levels)
        where e.column_key not in ('todo', 'in_progress', 'blocked', 'on_hold', 'done', 'cancelled')
           or case
                when jsonb_typeof(e.levels) <> 'array' then true
