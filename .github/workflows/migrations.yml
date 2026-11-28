@@ -29,6 +29,9 @@ concurrency:
 
 env:
   PROJECT_REF: cmyocabucpfzsvqyvspc
+  # GitHub runners have IPv4 only and the direct database host is IPv6 only: go through the
+  # session pooler of the coordinator project (Frankfurt). Not a secret.
+  POOLER_HOST: aws-0-eu-central-1.pooler.supabase.com
 
 jobs:
   dry-run:
@@ -48,7 +51,12 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           set -o pipefail
-          pnpm exec supabase db push --remote="$PROJECT_REF" --dry-run 2>&1 | tee dry-run.txt
+          # The pooler URL with the password from the secret, URL-encoded, masked in the logs.
+          PASSWORD=$(node -e 'process.stdout.write(encodeURIComponent(process.env.SUPABASE_DB_PASSWORD))')
+          echo "::add-mask::$PASSWORD"
+          DB_URL="postgresql://postgres.$PROJECT_REF:$PASSWORD@$POOLER_HOST:5432/postgres"
+          echo "::add-mask::$DB_URL"
+          pnpm exec supabase db push --remote="$DB_URL" --dry-run 2>&1 | tee dry-run.txt
           {
             echo '### Migrations that the merge will apply'
             echo '```'
@@ -73,7 +81,12 @@ jobs:
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
           set -o pipefail
-          pnpm exec supabase db push --remote="$PROJECT_REF" 2>&1 | tee push.txt
+          # The pooler URL with the password from the secret, URL-encoded, masked in the logs.
+          PASSWORD=$(node -e 'process.stdout.write(encodeURIComponent(process.env.SUPABASE_DB_PASSWORD))')
+          echo "::add-mask::$PASSWORD"
+          DB_URL="postgresql://postgres.$PROJECT_REF:$PASSWORD@$POOLER_HOST:5432/postgres"
+          echo "::add-mask::$DB_URL"
+          pnpm exec supabase db push --remote="$DB_URL" 2>&1 | tee push.txt
           {
             echo '### Migrations applied'
             echo '```'
