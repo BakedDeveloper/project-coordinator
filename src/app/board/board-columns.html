@@ -51,7 +51,7 @@
         cdkDropList
         [cdkDropListData]="column.key"
         [cdkDropListEnterPredicate]="canEnter"
-        [cdkDropListSortingDisabled]="true"
+        [cdkDropListSortingDisabled]="!canReorder(column)"
         (cdkDropListDropped)="dropped($event)"
       >
         @if (column.key === 'on_hold' && pausedProjects().length > 0) {
@@ -113,6 +113,12 @@
 
 <app-task-detail-dialog
   [task]="detailTask()"
+  [canUp]="detailPlace()?.canUp ?? false"
+  [canDown]="detailPlace()?.canDown ?? false"
+  [reorderable]="detailPlace() !== null"
+  [manual]="detailPlace()?.manual ?? false"
+  (reorder)="reorderFromDetail($event)"
+  (resetRank)="resetRank($event)"
   (saved)="moved.emit()"
   (moveTo)="moveFromDetail($event.task, $event.to)"
   (deleteAsked)="deleteFromDetail($event)"

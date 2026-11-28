@@ -140,6 +140,45 @@ export class TaskService {
     }
   }
 
+  /**
+   * Orders tasks by hand: the first gets manual_rank 1, the next 2, and so on. v_priorities
+   * puts them first, in this order (issue #55). Fails if any of them was not changed.
+   */
+  async setManualRanks(ids: readonly string[]): Promise<void> {
+    const results = await Promise.all(
+      ids.map((id, index) =>
+        this.supabase
+          .from('tasks')
+          .update({ manual_rank: index + 1 })
+          .eq('id', id)
+          .select('id')
+          .then(
+            (r) => r,
+            () => null,
+          ),
+      ),
+    );
+    if (results.some((r) => r === null || r.error || r.data.length !== 1)) {
+      throw new TaskUpdateError();
+    }
+  }
+
+  /** Gives a task back to the automatic order. */
+  async clearManualRank(id: string): Promise<void> {
+    const result = await this.supabase
+      .from('tasks')
+      .update({ manual_rank: null })
+      .eq('id', id)
+      .select('id')
+      .then(
+        (r) => r,
+        () => null,
+      );
+    if (result === null || result.error || result.data.length !== 1) {
+      throw new TaskUpdateError();
+    }
+  }
+
   /** Creates a task with the fields Simone filled in; returns its id. */
   async create(task: NewTask): Promise<string> {
     const title = task.title.trim();

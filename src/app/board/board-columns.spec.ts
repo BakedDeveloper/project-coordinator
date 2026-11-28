@@ -30,12 +30,17 @@ async function render(
   },
   remove = vi.fn(() => Promise.resolve()),
   setProjectStatus = vi.fn(() => Promise.resolve()),
+  setManualRanks = vi.fn(() => Promise.resolve()),
+  clearManualRank = vi.fn(() => Promise.resolve()),
 ) {
   await TestBed.configureTestingModule({
     imports: [BoardColumns],
     providers: [
       provideRouter([]),
-      { provide: TaskService, useValue: { setStatus, delete: remove } },
+      {
+        provide: TaskService,
+        useValue: { setStatus, delete: remove, setManualRanks, clearManualRank },
+      },
       {
         provide: PreferencesService,
         useValue: {
@@ -68,7 +73,17 @@ async function render(
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   document.body.appendChild(element);
-  return { fixture, element, setStatus, moved, preferences, remove, setProjectStatus };
+  return {
+    fixture,
+    element,
+    setStatus,
+    moved,
+    preferences,
+    remove,
+    setProjectStatus,
+    setManualRanks,
+    clearManualRank,
+  };
 }
 
 /** The details the popup reads, made from the card. */
@@ -335,12 +350,13 @@ describe('BoardColumns', () => {
     expect(element.querySelector('.group')).toBeNull();
   });
 
-  it('offers no move and no delete for a GitHub task, and says why', async () => {
+  it('offers no move to another column and no delete for a GitHub task, and says why', async () => {
     const { fixture, element } = await render([
       boardTask({ id: 'g1', title: 'Da GitHub', fromGithub: true }),
     ]);
 
-    expect(element.querySelector('.item')!.classList).toContain('cdk-drag-disabled');
+    // It drags only to change its place in Da fare: the order is the coordinator's.
+    expect(element.querySelector('.item')!.classList).not.toContain('cdk-drag-disabled');
     await openCard(fixture, element, 'Da GitHub');
     expect(element.querySelector('.detail__move')).toBeNull();
     expect(element.querySelector('.field__hint')?.textContent).toContain('GitHub');
@@ -486,5 +502,64 @@ describe('BoardColumns', () => {
     expect(element.querySelector('.card__date')?.textContent).toContain('Salvo');
     finish();
     await fixture.whenStable();
+  });
+
+  it('moves a card up with the keyboard from its popup and saves the new order', async () => {
+    const { fixture, element, setManualRanks, moved } = await render([
+      boardTask({ id: 'a', title: 'Primo', priorityRank: 1 }),
+      boardTask({ id: 'b', title: 'Secondo', priorityRank: 2 }),
+    ]);
+
+    await openCard(fixture, element, 'Secondo');
+    const order = element.querySelector<HTMLElement>('.detail__order')!;
+    expect(button(order, 'Giù').disabled).toBe(true);
+    button(order, 'Su').click();
+    await fixture.whenStable();
+
+    expect(setManualRanks).toHaveBeenCalledWith(['b', 'a']);
+    expect(column(element, 'todo')).toEqual(['Secondo', 'Primo']);
+    expect(moved).toHaveBeenCalledTimes(1);
+  });
+
+  it('gives a card ranked by hand back to the automatic order', async () => {
+    const { fixture, element, clearManualRank } = await render([
+      boardTask({ id: 'a', title: 'A mano', manualRank: 1 }),
+    ]);
+
+    await openCard(fixture, element, 'A mano');
+    button(element.querySelector<HTMLElement>('.detail__order')!, 'Torna automatico').click();
+    await fixture.whenStable();
+
+    expect(clearManualRank).toHaveBeenCalledWith('a');
+  });
+
+  it('puts the old order back when the new one cannot be saved', async () => {
+    const { fixture, element } = await render(
+      [
+        boardTask({ id: 'a', title: 'Primo', priorityRank: 1 }),
+        boardTask({ id: 'b', title: 'Secondo', priorityRank: 2 }),
+      ],
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      vi.fn(() => Promise.reject(new Error('offline'))),
+    );
+
+    await openCard(fixture, element, 'Secondo');
+    button(element.querySelector<HTMLElement>('.detail__order')!, 'Su').click();
+    await fixture.whenStable();
+
+    expect(column(element, 'todo')).toEqual(['Primo', 'Secondo']);
+    expect(element.querySelector('.move-error')?.textContent).toContain('nuovo ordine');
+  });
+
+  it('offers no manual order in a column without priority', async () => {
+    const { fixture, element } = await render([
+      boardTask({ id: 'h', title: 'Sospeso', status: 'on_hold', priorityRank: null }),
+    ]);
+
+    await openCard(fixture, element, 'Sospeso');
+    expect(element.querySelector('.detail__order')).toBeNull();
   });
 });

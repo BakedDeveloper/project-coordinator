@@ -36,6 +36,8 @@ export interface ProjectTask {
   waitingOn: string | null;
   /** `origin = 'github'`: GitHub decides title and open/closed, the app does not move it. */
   fromGithub: boolean;
+  /** `tasks.manual_rank`: the place Simone gave it by hand (1 = top); null = automatic. */
+  manualRank: number | null;
   createdAt: string;
   /** From `v_priorities`: null when the project is not active (no priorities). */
   priorityRank: number | null;
@@ -99,9 +101,9 @@ export class ProjectUpdateError extends Error {
 // Literal strings: supabase-js derives the row types from them.
 const PROJECT_COLUMNS = 'id, name, scope, status, color, weekly_hours';
 const TASK_COLUMNS =
-  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at';
+  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at, manual_rank';
 const DONE_TASK_COLUMNS =
-  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at, completed_at';
+  'id, title, next_action, status, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, created_at, completed_at, manual_rank';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -233,6 +235,7 @@ export class ProjectService {
         hasQuestionToAsk: row.has_question_to_ask ?? false,
         waitingOn: row.waiting_on,
         fromGithub: row.origin === 'github',
+        manualRank: row.manual_rank,
         createdAt: row.created_at ?? '',
         priorityRank: ranks.get(row.id) ?? null,
       });
@@ -259,6 +262,7 @@ export class ProjectService {
         hasQuestionToAsk: row.has_question_to_ask ?? false,
         waitingOn: row.waiting_on,
         fromGithub: row.origin === 'github',
+        manualRank: row.manual_rank,
         createdAt: row.created_at ?? '',
         completedAt: row.completed_at,
       });
@@ -285,6 +289,7 @@ export class ProjectService {
         hasQuestionToAsk: row.has_question_to_ask ?? false,
         waitingOn: row.waiting_on,
         fromGithub: row.origin === 'github',
+        manualRank: row.manual_rank,
         createdAt: row.created_at ?? '',
       });
     }

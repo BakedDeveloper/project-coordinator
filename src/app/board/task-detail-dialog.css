@@ -16,6 +16,7 @@
 
 .detail__head,
 .detail__actions,
+.detail__order,
 .detail__move {
   display: flex;
   flex-wrap: wrap;
@@ -87,6 +88,7 @@
   font-weight: 600;
 }
 
+.detail__order,
 .detail__move {
   margin-top: 1rem;
   padding-top: 0.75rem;

@@ -29,6 +29,14 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - `v_priorities` contiene solo i task aperti dei progetti attivi: i task fatti si leggono da `v_tasks`.
 - Ogni colonna mostra nell'intestazione quanti task contiene; se è vuota lo dice.
 
+### Ordinare a mano
+
+- In Da fare, In corso e Bloccato si trascina una scheda **in alto o in basso** per cambiarne la priorità (issue #55); da tastiera, nel popup, i bottoni **Su** e **Giù**.
+- Il nuovo ordine si salva in `tasks.manual_rank` per le schede della colonna (1 = in alto). `v_priorities` mette prima i task ordinati a mano, nel loro ordine, poi gli altri con la regola automatica: l'app continua a leggere solo `priority_rank`.
+- **"Torna automatico"** nel popup toglie l'ordine a mano a un task.
+- Con la colonna raggruppata per progetto non si riordina. Fatto, Sospeso e Annullato non hanno priorità: lì non si riordina.
+- Anche i task GitHub si riordinano: l'ordine è del coordinatore. Gli account dei progetti non scrivono mai `manual_rank`.
+
 ### Raggruppare per progetto
 
 - Ogni colonna della board condivisa ha il bottone **"Raggruppa per progetto"** (`aria-pressed`, issue #52). Raggruppata, la colonna mostra **una scheda per progetto** (badge e numero di task), chiusa: si apre con un clic o da tastiera e mostra i task di quel progetto.

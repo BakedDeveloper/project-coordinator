@@ -20,6 +20,7 @@ export function boardTask(overrides: Partial<BoardTask> = {}): BoardTask {
     hasQuestionToAsk: false,
     waitingOn: null,
     fromGithub: false,
+    manualRank: null,
     completedAt: null,
     ...overrides,
   };

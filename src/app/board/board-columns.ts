@@ -36,7 +36,11 @@ import {
   DEFAULT_VISIBLE_COLUMNS,
   groupByProject,
   moveTargets,
+  REORDERABLE_COLUMNS,
+  columnOf,
+  moveInColumn,
   withMove,
+  withOrder,
   type BoardColumn,
   type ColumnKey,
   type TargetColumn,
@@ -113,6 +117,11 @@ export class BoardColumns {
   private readonly detailDialog = viewChild.required(TaskDetailDialog);
   private detailReturnFocus: HTMLElement | null = null;
   /** Tasks being written, shown already moved. Reset when the page gives new columns. */
+  /** Columns put in order by hand, shown in that order while it is written. */
+  private readonly ordered = linkedSignal<BoardColumn[], ReadonlyMap<ColumnKey, string[]>>({
+    source: this.columns,
+    computation: () => new Map(),
+  });
   private readonly pending = linkedSignal<BoardColumn[], ReadonlyMap<string, TargetColumn>>({
     source: this.columns,
     computation: () => new Map(),
@@ -139,6 +148,9 @@ export class BoardColumns {
     let columns = this.columns();
     for (const [taskId, to] of this.pending()) {
       columns = withMove(columns, taskId, to, this.clock());
+    }
+    for (const [key, ids] of this.ordered()) {
+      columns = withOrder(columns, key, ids);
     }
     const removed = this.removed();
     return removed.size === 0
@@ -240,8 +252,20 @@ export class BoardColumns {
     return this.pending().has(task.id);
   }
 
+  /** A card drags to another column, or within a column that has a priority (also GitHub ones). */
   protected canDrag(task: BoardTask): boolean {
-    return !this.isPending(task) && moveTargets(task).length > 0;
+    return (
+      !this.isPending(task) &&
+      (moveTargets(task).length > 0 || REORDERABLE_COLUMNS.includes(columnOf(task)))
+    );
+  }
+
+  /** Cards are put in order by hand in the columns with a priority, when not grouped. */
+  protected canReorder(column: BoardColumn): boolean {
+    return (
+      REORDERABLE_COLUMNS.includes(column.key) &&
+      !(this.showProject() && this.isGrouped(column.key))
+    );
   }
 
   /** A card may enter its own column (to go back) or one of its targets. */
@@ -250,7 +274,14 @@ export class BoardColumns {
 
   protected dropped(event: CdkDragDrop<ColumnKey, ColumnKey, BoardTask>): void {
     const to = event.container.data;
-    if (event.previousContainer === event.container || to === 'blocked') {
+    if (event.previousContainer === event.container) {
+      const column = this.shown().find((c) => c.key === to);
+      if (column && this.canReorder(column) && event.previousIndex !== event.currentIndex) {
+        void this.reorder(column, event.previousIndex, event.currentIndex);
+      }
+      return;
+    }
+    if (to === 'blocked') {
       return;
     }
     void this.move(event.item.data, to);
@@ -269,6 +300,68 @@ export class BoardColumns {
       this.detailReturnFocus.focus();
     }
     this.detailReturnFocus = null;
+  }
+
+  /**
+   * Puts the task at `from` in the column at `to`: the column order becomes manual, for the
+   * cards shown (issue #55). The cards move at once; a failed write puts them back.
+   */
+  protected async reorder(column: BoardColumn, from: number, to: number): Promise<void> {
+    const ids = moveInColumn(
+      column.tasks.map((t) => t.id),
+      from,
+      to,
+    );
+    this.error.set(null);
+    this.ordered.update((o) => new Map(o).set(column.key, ids));
+    try {
+      await this.taskService.setManualRanks(ids);
+      this.moved.emit();
+    } catch {
+      this.ordered.update((o) => {
+        const next = new Map(o);
+        next.delete(column.key);
+        return next;
+      });
+      this.error.set('Non sono riuscito a salvare il nuovo ordine. Riprova.');
+    }
+  }
+
+  /** Where the task of the popup sits in its column, for Su and Giù. */
+  protected readonly detailPlace = computed(() => {
+    const task = this.detailTask();
+    const column = task
+      ? this.shown().find((c) => c.tasks.some((t) => t.id === task.id))
+      : undefined;
+    if (!task || !column || !this.canReorder(column)) {
+      return null;
+    }
+    const index = column.tasks.findIndex((t) => t.id === task.id);
+    const current = column.tasks[index];
+    return {
+      column,
+      index,
+      canUp: index > 0,
+      canDown: index < column.tasks.length - 1,
+      manual: current.manualRank !== null,
+    };
+  });
+
+  protected reorderFromDetail(direction: 'up' | 'down'): void {
+    const place = this.detailPlace();
+    if (place) {
+      void this.reorder(place.column, place.index, place.index + (direction === 'up' ? -1 : 1));
+    }
+  }
+
+  protected async resetRank(task: BoardTask): Promise<void> {
+    this.error.set(null);
+    try {
+      await this.taskService.clearManualRank(task.id);
+      this.moved.emit();
+    } catch {
+      this.error.set("Non sono riuscito a rimettere l'ordine automatico. Riprova.");
+    }
   }
 
   protected moveFromDetail(task: BoardTask, to: TargetColumn): void {
