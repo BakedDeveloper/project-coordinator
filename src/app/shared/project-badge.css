@@ -79,6 +79,27 @@
   white-space: nowrap;
 }
 
+/* Plain: a coloured tile with the logo or icon, the name in a readable shade of the colour. */
+.badge--plain .badge__tag {
+  gap: 0.5rem;
+  padding: 0;
+  background: none;
+  color: color-mix(in srgb, var(--badge-color) var(--project-ink-amount), var(--project-ink-with));
+}
+
+.badge--plain .badge__icon {
+  box-sizing: content-box;
+  padding: 0.1875rem;
+  border-radius: 0.3125rem;
+  background: var(--badge-color);
+  color: var(--color-on-project);
+}
+
+.badge--plain .badge__logo {
+  outline: 2px solid var(--badge-color);
+  outline-offset: -1px;
+}
+
 .badge--large {
   font-size: 1.25rem;
   font-weight: 700;

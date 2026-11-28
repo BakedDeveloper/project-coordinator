@@ -236,14 +236,14 @@ describe('ProjectService', () => {
     it('reads every project by name', async () => {
       const { service, calls } = setup({
         projects: ok([
-          { id: 'a', name: 'Casa', status: 'active', color: null },
-          { id: 'b', name: 'Vecchio', status: 'closed', color: '#2f5f93' },
+          { id: 'a', name: 'Casa', scope: 'personal', status: 'active', color: null },
+          { id: 'b', name: 'Vecchio', scope: 'work', status: 'closed', color: '#2f5f93' },
         ]),
       });
 
       expect(await service.list()).toEqual([
-        { id: 'a', name: 'Casa', status: 'active', color: null },
-        { id: 'b', name: 'Vecchio', status: 'closed', color: '#2f5f93' },
+        { id: 'a', name: 'Casa', scope: 'personal', status: 'active', color: null },
+        { id: 'b', name: 'Vecchio', scope: 'work', status: 'closed', color: '#2f5f93' },
       ]);
       expect(calls['projects']).toContainEqual(['order', ['name']]);
     });

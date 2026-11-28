@@ -1,0 +1,44 @@
+<h1 class="title">Personalizzazione</h1>
+
+<fieldset class="group">
+  <legend class="group__legend">Tema</legend>
+  @for (option of themes; track option.value) {
+    <label class="choice">
+      <input
+        type="radio"
+        name="theme"
+        [value]="option.value"
+        [checked]="theme.choice() === option.value"
+        (change)="chooseTheme(option.value)"
+      />
+      <span class="choice__label">{{ option.label }}</span>
+    </label>
+  }
+  <p class="group__hint">Salvato nel tuo account, vale su tutti i dispositivi.</p>
+</fieldset>
+
+<fieldset class="group">
+  <legend class="group__legend">Schede della board</legend>
+  @for (option of cardStyles; track option.value) {
+    <label class="choice">
+      <input
+        type="radio"
+        name="card-style"
+        [value]="option.value"
+        [checked]="settings.cardStyle() === option.value"
+        (change)="settings.setCardStyle(option.value)"
+      />
+      <span class="choice__label">{{ option.label }}</span>
+      <span class="choice__hint">{{ option.hint }}</span>
+    </label>
+  }
+  <label class="choice">
+    <input
+      type="checkbox"
+      [checked]="settings.showRank()"
+      (change)="settings.setShowRank($any($event.target).checked)"
+    />
+    <span class="choice__label">Numero di priorità sulle schede</span>
+  </label>
+  <p class="group__hint">Salvato solo su questo dispositivo.</p>
+</fieldset>

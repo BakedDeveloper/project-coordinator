@@ -16,8 +16,8 @@ import type { BoardTask } from '../data/board.service';
 import { ProjectBadge } from '../shared/project-badge';
 
 /**
- * The compact card of the board (issue #57): project badge, title (two lines at most), date
- * and signal icons, all cards the same height. The whole card is a button that opens the
+ * The compact card of the board (issues #57 and #66): project badge and priority number, title
+ * (two lines at most), date and signal icons, all cards the same height. The whole card is a button that opens the
  * detail popup; dragging stays on the list item around it.
  */
 @Component({
@@ -40,11 +40,16 @@ export class BoardCard {
   readonly showProject = input(true);
   /** The status is being written. */
   readonly busy = input(false);
+  /** The priority number, when the task has one (it can be hidden, issue #66). */
+  readonly showRank = input(false);
+  /** Plain cards (sketch A): a neutral border, the project only in its tile. */
+  readonly clean = input(false);
   readonly opened = output<HTMLButtonElement>();
 
   protected readonly color = computed(() =>
     projectColor(this.task().projectId, this.task().projectColor),
   );
+  protected readonly rank = computed(() => (this.showRank() ? this.task().priorityRank : null));
   protected readonly date = computed(() => {
     const task = this.task();
     if (task.completedAt !== null) {

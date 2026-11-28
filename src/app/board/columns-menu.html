@@ -25,4 +25,13 @@
       </label>
     }
   </fieldset>
+  <label class="columns-menu__option columns-menu__extra">
+    <input
+      type="checkbox"
+      [checked]="settings.showRank()"
+      (change)="settings.setShowRank($any($event.target).checked)"
+      (keydown.escape)="close(trigger)"
+    />
+    Numero di priorità sulle schede
+  </label>
 }

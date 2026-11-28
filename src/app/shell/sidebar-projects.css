@@ -1,0 +1,140 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-height: 0;
+}
+
+.projects__heading {
+  margin: 1rem 0 0.25rem;
+  padding: 0 0.625rem;
+  color: var(--color-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.projects__scopes {
+  display: flex;
+  gap: 0.125rem;
+  margin: 0 0.375rem 0.375rem;
+  padding: 0.1875rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted);
+}
+
+.projects__scope {
+  flex: 1;
+  min-height: 2rem;
+  padding: 0 0.25rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.projects__scope[aria-pressed='true'] {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.projects__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.projects__link {
+  display: flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.projects__link:hover {
+  background: var(--color-surface-muted);
+}
+
+.projects__link--current {
+  background: var(--color-nav-active);
+}
+
+/* Paused and closed projects: the same badge, a quieter row. */
+.projects__link--quiet {
+  opacity: 0.85;
+}
+
+.projects__more {
+  margin-top: 0.25rem;
+}
+
+.projects__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0 0.625rem;
+  border-radius: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.projects__summary:hover {
+  background: var(--color-surface-muted);
+}
+
+.projects__count {
+  font-weight: 500;
+}
+
+.projects__message {
+  margin: 0;
+  padding: 0.25rem 0.625rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.projects__message--error {
+  color: var(--color-status-blocked);
+}
+
+.projects__message--error p {
+  margin: 0 0 0.25rem;
+}
+
+.projects__retry {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Reduced menu: tiles centred under the section icons. */
+:host-context(.shell--collapsed) .projects__link {
+  justify-content: center;
+  padding: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

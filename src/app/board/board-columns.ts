@@ -27,6 +27,7 @@ import { ProjectGroup } from './project-group';
 import { TaskDetailDialog } from './task-detail-dialog';
 import type { BoardTask, PausedProject } from '../data/board.service';
 import { ProjectService } from '../data/project.service';
+import { LocalSettings } from '../shared/local-settings';
 import { PreferencesService } from '../data/preferences.service';
 import { TaskHasHoursError, TaskService } from '../data/task.service';
 import { CLOCK } from '../shared/clock';
@@ -84,6 +85,7 @@ export class BoardColumns {
   private readonly preferences = inject(PreferencesService);
   private readonly injector = inject(Injector);
   private readonly projects = inject(ProjectService);
+  protected readonly settings = inject(LocalSettings);
 
   readonly columns = input.required<BoardColumn[]>();
   /** Today as an ISO date, to tell due from overdue. */

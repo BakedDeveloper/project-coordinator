@@ -57,11 +57,11 @@ describe('ProjectBadge', () => {
     expect(element.querySelector('.badge__initials')).toBeNull();
   });
 
-  it('shows the generic icon, never initials, next to a client logo without project logo or icon', async () => {
-    const element = await render({ ...FLEET, logo: null, icon: null });
+  it('shows no icon and never initials next to a client logo: a logo is enough', async () => {
+    const element = await render({ ...FLEET, logo: null });
 
     expect(element.querySelector('.badge__client-img')).not.toBeNull();
-    expect(element.querySelector('.badge__tag svg.badge__icon')).not.toBeNull();
+    expect(element.querySelector('.badge__tag svg.badge__icon')).toBeNull();
     expect(element.querySelector('.badge__initials')).toBeNull();
     expect(element.querySelector('.badge__name')?.textContent).toBe('Fleet');
   });

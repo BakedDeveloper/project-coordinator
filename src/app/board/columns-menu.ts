@@ -1,5 +1,6 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 
+import { LocalSettings } from '../shared/local-settings';
 import { BOARD_COLUMNS, type ColumnKey } from './board.model';
 
 /** One change in the "Colonne" menu. */
@@ -23,6 +24,7 @@ export class ColumnsMenu {
   readonly toggled = output<ColumnToggle>();
 
   protected readonly columns = BOARD_COLUMNS;
+  protected readonly settings = inject(LocalSettings);
   protected readonly open = signal(false);
 
   protected isVisible(key: ColumnKey): boolean {

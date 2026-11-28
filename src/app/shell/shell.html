@@ -1,45 +1,101 @@
-<header class="shell__header">
-  <div class="shell__nav">
-    <a class="shell__brand" routerLink="/">Coordinatore</a>
-    <app-projects-menu />
-    <a
-      class="shell__link"
-      routerLink="/priorita"
-      routerLinkActive="shell__link--current"
-      ariaCurrentWhenActive="page"
-      >Priorità</a
-    >
-  </div>
-  <div class="shell__actions">
-    <label class="shell__theme">
-      <span class="shell__theme-label">Tema</span>
-      <select class="shell__theme-select" (change)="chooseTheme($event)">
-        @for (option of themeOptions; track option.value) {
-          <option [value]="option.value" [selected]="option.value === theme.choice()">
-            {{ option.label }}
-          </option>
-        }
-      </select>
-    </label>
+<div class="shell" [class.shell--collapsed]="collapsed()" [class.shell--drawer-open]="drawerOpen()">
+  <header class="topbar">
     <button
-      class="shell__sign-out"
+      #menuButton
       type="button"
-      (click)="signOut()"
-      [attr.aria-disabled]="signingOut()"
+      class="topbar__menu"
+      aria-controls="side-menu"
+      [attr.aria-expanded]="drawerOpen()"
+      (click)="drawerOpen.set(!drawerOpen())"
     >
-      Esci
+      <svg lucideMenu class="icon" aria-hidden="true"></svg>
+      <span class="visually-hidden">Menu</span>
     </button>
-  </div>
-</header>
+    <a class="topbar__brand" routerLink="/">Coordinatore</a>
+  </header>
 
-<p class="shell__notice" role="status">
-  @if (theme.saveFailed()) {
-    <span class="shell__notice-text">
-      Tema cambiato solo su questo dispositivo: non è stato salvato.
-    </span>
+  @if (drawerOpen()) {
+    <div class="backdrop" aria-hidden="true" (click)="closeDrawer()"></div>
   }
-</p>
 
-<main class="shell__main">
-  <router-outlet />
-</main>
+  <nav id="side-menu" class="sidebar" aria-label="Menu principale">
+    <a class="sidebar__brand" routerLink="/">
+      <span class="sidebar__logo"
+        ><svg lucideLayoutGrid class="icon" aria-hidden="true"></svg
+      ></span>
+      <span class="sidebar__brand-name">Coordinatore</span>
+    </a>
+
+    <ul class="nav">
+      @for (item of sections; track item.path) {
+        <li>
+          <a
+            class="nav__link"
+            [routerLink]="item.path"
+            routerLinkActive="nav__link--current"
+            [routerLinkActiveOptions]="{ exact: true }"
+            ariaCurrentWhenActive="page"
+          >
+            <svg [lucideIcon]="item.icon" class="icon" aria-hidden="true"></svg>
+            <span class="nav__label">{{ item.label }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <app-sidebar-projects class="sidebar__projects" [collapsed]="collapsed()" />
+
+    <ul class="nav sidebar__foot">
+      <li>
+        <a
+          class="nav__link"
+          routerLink="/personalizzazione"
+          routerLinkActive="nav__link--current"
+          ariaCurrentWhenActive="page"
+        >
+          <svg lucidePalette class="icon" aria-hidden="true"></svg>
+          <span class="nav__label">Personalizza</span>
+        </a>
+      </li>
+      <li>
+        <button
+          class="nav__link"
+          type="button"
+          (click)="signOut()"
+          [attr.aria-disabled]="signingOut()"
+        >
+          <svg lucideLogOut class="icon" aria-hidden="true"></svg>
+          <span class="nav__label">Esci</span>
+        </button>
+      </li>
+      <li class="sidebar__collapse">
+        <button
+          class="nav__link"
+          type="button"
+          [attr.aria-pressed]="collapsed()"
+          (click)="settings.setSidebarCollapsed(!settings.sidebarCollapsed())"
+        >
+          @if (collapsed()) {
+            <svg lucidePanelLeftOpen class="icon" aria-hidden="true"></svg>
+          } @else {
+            <svg lucidePanelLeftClose class="icon" aria-hidden="true"></svg>
+          }
+          <span class="nav__label">Riduci il menu</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <div class="shell__content">
+    <p class="shell__notice" role="status">
+      @if (theme.saveFailed()) {
+        <span class="shell__notice-text">
+          Tema cambiato solo su questo dispositivo: non è stato salvato.
+        </span>
+      }
+    </p>
+    <main class="shell__main">
+      <router-outlet />
+    </main>
+  </div>
+</div>
