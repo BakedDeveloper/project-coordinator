@@ -31,6 +31,8 @@ export interface BoardTask {
   waitingOn: string | null;
   /** `origin = 'github'`: GitHub decides title and open/closed, the app does not move it. */
   fromGithub: boolean;
+  /** `tasks.manual_rank`: the place Simone gave it by hand (1 = top); null = automatic. */
+  manualRank: number | null;
   /** ISO timestamp; set only for done tasks. */
   completedAt: string | null;
 }
@@ -56,7 +58,7 @@ export class BoardUnavailableError extends Error {
 
 // Literal strings: supabase-js derives the row types from them.
 const OPEN_COLUMNS =
-  'id, title, next_action, status, project_id, project_name, project_scope, priority_rank, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin';
+  'id, title, next_action, status, project_id, project_name, project_scope, priority_rank, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin, manual_rank';
 const PARKED_COLUMNS =
   'id, title, next_action, status, project_id, project_name, project_scope, effective_due_date, checkpoint_name, blocks_others, is_blocked, is_waiting, has_question_to_ask, waiting_on, origin';
 const DONE_COLUMNS =
@@ -114,6 +116,7 @@ export class BoardService {
         ...common(row, row.id, row.project_id, row.project_scope, colors),
         status,
         priorityRank: row.priority_rank,
+        manualRank: row.manual_rank,
         completedAt: null,
       });
     }
@@ -131,6 +134,7 @@ export class BoardService {
         ...common(row, row.id, row.project_id, row.project_scope, colors),
         status: 'done',
         priorityRank: null,
+        manualRank: null,
         completedAt: row.completed_at,
       });
     }
@@ -149,6 +153,7 @@ export class BoardService {
         ...common(row, row.id, row.project_id, row.project_scope, colors),
         status,
         priorityRank: null,
+        manualRank: null,
         completedAt: null,
       });
     }

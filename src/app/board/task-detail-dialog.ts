@@ -33,11 +33,19 @@ export class TaskDetailDialog {
 
   /** The card that was opened. */
   readonly task = input<BoardTask | null>(null);
+  /** Its column has a priority: Su, Giù and Torna automatico apply. */
+  readonly reorderable = input(false);
+  readonly canUp = input(false);
+  readonly canDown = input(false);
+  /** It has an order given by hand. */
+  readonly manual = input(false);
 
   /** The task was saved: the board reads again. */
   readonly saved = output<void>();
   readonly moveTo = output<{ task: BoardTask; to: TargetColumn }>();
   readonly deleteAsked = output<BoardTask>();
+  readonly reorder = output<'up' | 'down'>();
+  readonly resetRank = output<BoardTask>();
   readonly closed = output<void>();
 
   protected readonly impacts = IMPACTS;

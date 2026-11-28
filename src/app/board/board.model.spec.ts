@@ -6,6 +6,8 @@ import {
   columnOf,
   doneSince,
   groupByProject,
+  moveInColumn,
+  withOrder,
   moveTargets,
   projectBoardTasks,
   projectOptions,
@@ -257,5 +259,25 @@ describe('board model', () => {
     expect(toHold[3].tasks[0]).toMatchObject({ status: 'on_hold', completedAt: null });
 
     expect(withMove(columns, 'missing', 'done', NOW)).toEqual(columns);
+  });
+
+  it('moves an id inside a column, clamped to its ends', () => {
+    expect(moveInColumn(['a', 'b', 'c'], 2, 0)).toEqual(['c', 'a', 'b']);
+    expect(moveInColumn(['a', 'b', 'c'], 0, 1)).toEqual(['b', 'a', 'c']);
+    expect(moveInColumn(['a', 'b', 'c'], 0, 9)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('shows a column in the order given by hand, others untouched', () => {
+    const columns = buildColumns(
+      [
+        boardTask({ id: 'a', priorityRank: 1 }),
+        boardTask({ id: 'b', priorityRank: 2 }),
+        boardTask({ id: 'p', priorityRank: 3, status: 'in_progress' }),
+      ],
+      ALL,
+      SINCE,
+    );
+    const ordered = withOrder(columns, 'todo', ['b', 'a']);
+    expect(columnIds(ordered)).toMatchObject({ todo: ['b', 'a'], in_progress: ['p'] });
   });
 });

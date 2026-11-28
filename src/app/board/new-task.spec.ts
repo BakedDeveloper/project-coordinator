@@ -10,10 +10,7 @@ const PROJECTS: ProjectLink[] = [
   { id: 'p2', name: 'Vecchio', status: 'closed', color: null },
 ];
 
-async function render(
-  projectId: string | null,
-  create = vi.fn(() => Promise.resolve('new')),
-) {
+async function render(projectId: string | null, create = vi.fn(() => Promise.resolve('new'))) {
   await TestBed.configureTestingModule({
     imports: [NewTask],
     providers: [

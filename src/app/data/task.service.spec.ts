@@ -177,4 +177,31 @@ describe('TaskService', () => {
       );
     });
   });
+
+  describe('manual order', () => {
+    it('gives each task its place, 1 first', async () => {
+      const { service, calls } = setup({ data: [{ id: 'x' }], error: null });
+
+      await service.setManualRanks(['b', 'a']);
+
+      expect(calls).toContainEqual(['update', { manual_rank: 1 }]);
+      expect(calls).toContainEqual(['eq', 'id', 'b']);
+      expect(calls).toContainEqual(['update', { manual_rank: 2 }]);
+      expect(calls).toContainEqual(['eq', 'id', 'a']);
+    });
+
+    it('gives a task back to the automatic order', async () => {
+      const { service, calls } = setup({ data: [{ id: 'a' }], error: null });
+
+      await service.clearManualRank('a');
+
+      expect(calls).toContainEqual(['update', { manual_rank: null }]);
+    });
+
+    it('fails when a write fails', async () => {
+      const { service } = setup({ data: [], error: null });
+      await expect(service.setManualRanks(['a'])).rejects.toBeInstanceOf(TaskUpdateError);
+      await expect(service.clearManualRank('a')).rejects.toBeInstanceOf(TaskUpdateError);
+    });
+  });
 });

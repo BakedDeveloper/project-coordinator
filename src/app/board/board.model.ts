@@ -68,6 +68,38 @@ export function columnOf(task: BoardTask): ColumnKey {
   return task.isBlocked ? 'blocked' : task.status;
 }
 
+/** The columns with a priority, where cards can be put in order by hand (issue #55). */
+export const REORDERABLE_COLUMNS: readonly ColumnKey[] = ['todo', 'in_progress', 'blocked'];
+
+/**
+ * The columns with one column in the given order, while the database is being written. The
+ * ids come from the column itself; a task missing from them keeps its place at the end.
+ */
+export function withOrder(
+  columns: readonly BoardColumn[],
+  key: ColumnKey,
+  ids: readonly string[],
+): BoardColumn[] {
+  return columns.map((column) => {
+    if (column.key !== key) {
+      return column;
+    }
+    const place = new Map(ids.map((id, index) => [id, index]));
+    const tasks = [...column.tasks].sort(
+      (a, b) => (place.get(a.id) ?? ids.length) - (place.get(b.id) ?? ids.length),
+    );
+    return { ...column, tasks };
+  });
+}
+
+/** The ids of a column after moving the task at index `from` to index `to`. */
+export function moveInColumn(ids: readonly string[], from: number, to: number): string[] {
+  const next = [...ids];
+  const [moved] = next.splice(from, 1);
+  next.splice(Math.max(0, Math.min(to, next.length)), 0, moved);
+  return next;
+}
+
 /** The columns a card can be moved to: Bloccato never, it needs a reason (a block). */
 export type TargetColumn = Exclude<ColumnKey, 'blocked'>;
 

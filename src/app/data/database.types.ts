@@ -454,6 +454,7 @@ export type Database = {
           impact: string
           kind: string | null
           last_changed_by: string
+          manual_rank: number | null
           next_action: string | null
           origin: string
           position: number | null
@@ -475,6 +476,7 @@ export type Database = {
           impact?: string
           kind?: string | null
           last_changed_by?: string
+          manual_rank?: number | null
           next_action?: string | null
           origin?: string
           position?: number | null
@@ -496,6 +498,7 @@ export type Database = {
           impact?: string
           kind?: string | null
           last_changed_by?: string
+          manual_rank?: number | null
           next_action?: string | null
           origin?: string
           position?: number | null
@@ -712,6 +715,7 @@ export type Database = {
           kind: string | null
           last_activity: string | null
           last_changed_by: string | null
+          manual_rank: number | null
           next_action: string | null
           origin: string | null
           position: number | null
@@ -772,6 +776,7 @@ export type Database = {
           kind: string | null
           last_activity: string | null
           last_changed_by: string | null
+          manual_rank: number | null
           next_action: string | null
           origin: string | null
           position: number | null
