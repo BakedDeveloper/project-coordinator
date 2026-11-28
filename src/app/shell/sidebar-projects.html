@@ -1,0 +1,83 @@
+<h2 class="projects__heading" [class.visually-hidden]="collapsed()">Progetti</h2>
+@if (!collapsed()) {
+  <div class="projects__scopes" role="group" aria-label="Progetti da mostrare">
+    @for (s of scopes; track s.value) {
+      <button
+        type="button"
+        class="projects__scope"
+        [attr.aria-pressed]="settings.menuScope() === s.value"
+        (click)="settings.setMenuScope(s.value)"
+      >
+        {{ s.label }}
+      </button>
+    }
+  </div>
+}
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="projects__message" role="status">
+      <span [class.visually-hidden]="collapsed()">Carico i progetti…</span>
+    </p>
+  }
+  @case ('error') {
+    <div class="projects__message projects__message--error" role="alert">
+      <p [class.visually-hidden]="collapsed()">Non riesco a caricare i progetti.</p>
+      <button type="button" class="projects__retry" (click)="load()">Riprova</button>
+    </div>
+  }
+  @default {
+    @for (group of groups(); track group.status) {
+      @if (group.status === 'active') {
+        <ul class="projects__list" aria-label="Progetti attivi">
+          @for (project of group.projects; track project.id) {
+            <li>
+              <a
+                class="projects__link"
+                [routerLink]="['/progetti', project.id]"
+                routerLinkActive="projects__link--current"
+                ariaCurrentWhenActive="page"
+                [attr.title]="collapsed() ? project.name : null"
+              >
+                <app-project-badge
+                  [projectId]="project.id"
+                  [name]="project.name"
+                  [color]="color(project)"
+                  [plain]="true"
+                  [iconOnly]="collapsed()"
+                />
+              </a>
+            </li>
+          }
+        </ul>
+      } @else if (!collapsed()) {
+        <details class="projects__more">
+          <summary class="projects__summary">
+            {{ group.label }} <span class="projects__count">{{ group.projects.length }}</span>
+          </summary>
+          <ul class="projects__list">
+            @for (project of group.projects; track project.id) {
+              <li>
+                <a
+                  class="projects__link projects__link--quiet"
+                  [routerLink]="['/progetti', project.id]"
+                  routerLinkActive="projects__link--current"
+                  ariaCurrentWhenActive="page"
+                >
+                  <app-project-badge
+                    [projectId]="project.id"
+                    [name]="project.name"
+                    [color]="color(project)"
+                    [plain]="true"
+                  />
+                </a>
+              </li>
+            }
+          </ul>
+        </details>
+      }
+    } @empty {
+      <p class="projects__message" [class.visually-hidden]="collapsed()">Nessun progetto.</p>
+    }
+  }
+}

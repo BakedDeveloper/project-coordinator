@@ -48,6 +48,8 @@ export interface ProjectLink {
   id: string;
   name: string;
   status: ProjectStatus;
+  /** Work or personal (side menu filter, issue #66). */
+  scope: ProjectScope;
   /** `projects.color`; null when the project has none. */
   color: string | null;
 }
@@ -136,7 +138,7 @@ export class ProjectService {
   async list(): Promise<ProjectLink[]> {
     const result = await this.supabase
       .from('projects')
-      .select('id, name, status, color')
+      .select('id, name, scope, status, color')
       .order('name')
       .then(
         (r) => r,
@@ -146,8 +148,8 @@ export class ProjectService {
       throw new ProjectUnavailableError();
     }
     return result.data.flatMap((row) =>
-      isStatus(row.status)
-        ? [{ id: row.id, name: row.name, status: row.status, color: row.color }]
+      isStatus(row.status) && isScope(row.scope)
+        ? [{ id: row.id, name: row.name, scope: row.scope, status: row.status, color: row.color }]
         : [],
     );
   }

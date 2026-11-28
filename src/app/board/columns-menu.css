@@ -38,3 +38,9 @@
   min-height: 2.5rem;
   cursor: pointer;
 }
+
+/* Below the columns, its own line: the priority number on the cards (issue #66). */
+.columns-menu__extra {
+  flex-basis: 100%;
+  justify-content: flex-end;
+}

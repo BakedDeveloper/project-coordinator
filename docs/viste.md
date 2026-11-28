@@ -77,7 +77,9 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 ### Scheda di un task
 
 - Sulla board la scheda è **compatta** e tutte hanno la stessa altezza (issue #57): badge del progetto (solo sulla board condivisa), titolo su due righe al massimo, data ("scade 24 nov", in rosso "scaduto il 24 nov"; in Fatto "fatto il 24 nov") e piccole icone per "sblocca altri", "aspetta qualcuno", "domanda da fare" e "bloccato", con il testo per i lettori di schermo.
-- La scheda ha una striscia del colore del progetto a sinistra e una sua tinta chiara (al massimo 10%, issue #54). I task bloccati hanno il bordo tratteggiato.
+- Stile scelto il 28/11/2026 dalle bozze (issue #66): scheda bianca con il **bordo nel colore del progetto** e il nome del progetto scritto nel suo colore, accanto al riquadro colorato con il logo o l'icona. Le tonalità del bordo e del nome vengono dal tema (`--project-*` in `src/styles.css`), così restano leggibili in chiaro e in scuro. I task bloccati hanno il bordo tratteggiato.
+- In alto a destra il **numero di priorità** (`#3`, da `priority_rank`), che si nasconde da Personalizzazione o dal menu "Colonne".
+- In Personalizzazione si può scegliere anche lo stile **Pulita**: bordo neutro, il colore solo nel riquadro del logo.
 - Tutta la scheda è un bottone: apre il **popup di dettaglio**. Il trascinamento resta sulla scheda.
 - L'elenco per priorità e la Cronologia usano ancora la card estesa, con prossima azione e checkpoint.
 
@@ -92,6 +94,7 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 
 - Ogni progetto ha un'**icona disegnata** presa da una libreria (proposta: Lucide, da confermare nella sua issue). Nel database se ne salva il nome (`projects.icon`).
 - Se l'icona manca o il nome è sconosciuto, al suo posto c'è un'**icona generica** (una cartella): mai le iniziali (issue #50).
+- Un logo basta: se c'è il logo del progetto o quello del cliente, l'icona non si mostra (issue #66).
 - L'icona è decorativa: il testo per i lettori di schermo resta il nome del progetto.
 
 ### Sfondo
@@ -99,6 +102,19 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 - Dietro le board si può scegliere uno **sfondo**: prima una serie di sfondi predefiniti, poi anche un'immagine propria (serve Supabase Storage).
 - La scelta sta in `user_preferences`: uno sfondo generale, eventualmente uno per progetto.
 - Le colonne restano su un fondo pieno, così il testo mantiene il contrasto di almeno 4.5:1 con qualsiasi sfondo, in entrambi i temi.
+
+### Menu laterale
+
+- Scelto il 28/11/2026 dalle bozze (issue #66): a sinistra un **menu con etichette** (Board, Priorità), poi i **progetti** con il loro colore e un selettore Tutti / Lavoro / Personale; i progetti in pausa e chiusi stanno chiusi sotto. In fondo Personalizza ed Esci.
+- "Riduci il menu" lo trasforma in una **barra di icone** con una piccola etichetta; nella barra restano solo i riquadri dei progetti attivi.
+- Sul telefono il menu si apre dal pulsante in alto, sopra la pagina; Esc o un clic fuori lo chiudono.
+- Le sezioni Oggi, Task e Calendario si aggiungono al menu con le loro issue.
+
+### Personalizzazione
+
+- Pagina `/personalizzazione`: tema (Come il sistema, Chiaro, Scuro Grafite), stile delle schede (Bordo del progetto, Pulita) e numero di priorità.
+- Il tema si salva nel database; stile delle schede, numero di priorità, menu ridotto e selettore dei progetti solo su questo dispositivo.
+- La galleria con altri temi arriva con la issue #74.
 
 ### Telefono
 
@@ -108,7 +124,7 @@ Le board hanno sei colonne, sempre in quest'ordine (issue #39):
 ### Colori e testi
 
 - **Colori dal database**: `projects.color` (scuro, testo bianco sopra) e `features.color` (chiaro, testo `#3a1f45` sopra). Le feature di Nutrirea ce l'hanno già; le prime tre sono quelle del pavimento della v2: Pazienti `#f4bdd1`, Fondamenta `#c6abe3`, Accesso e sicurezza `#a5c9ed`.
-- **Colori di stato**: fatto `#2e7a22`, in corso `#a86f00`, da fare `#6a1f6e`, bloccato `#c0262b`. Testo `#3a1f45`, testo secondario `#6f5c78`, fondo `#fffdfb`. Carattere Plus Jakarta Sans. Il tema scuro ha le sue varianti, con il contrasto verificato da `pnpm lint`.
+- **Palette** (issue #66): tema chiaro grigio-ardesia (fondo `#f4f5f7`, testo `#1b1f24`, accento blu `#2f5bd3`) e tema scuro **Grafite** (fondo `#1b1c1f`, schede `#26272b`, testo `#ececee`). **Colori di stato** del chiaro: fatto `#2a6f1f`, in corso `#a86f00` (testo `#855800`), da fare `#2f5bd3`, bloccato `#b42328`. Carattere Plus Jakarta Sans. Il contrasto di ogni coppia è verificato da `pnpm lint`.
 - Testi in italiano. Date brevi all'italiana ("24 nov").
 
 ## Board condivisa (pagina iniziale)

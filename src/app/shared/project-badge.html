@@ -1,14 +1,21 @@
-<span class="badge" [class.badge--large]="large()">
+<span
+  class="badge"
+  [class.badge--large]="large()"
+  [class.badge--plain]="plain()"
+  [style.--badge-color]="color()"
+>
   @if (clientLogo(); as url) {
     <span class="badge__client"><img class="badge__client-img" [src]="url" alt="" /></span>
   }
-  <span class="badge__tag" [style.background-color]="color()">
+  <span class="badge__tag" [style.background-color]="plain() ? null : color()">
     @if (logo(); as url) {
       <span class="badge__logo"><img class="badge__logo-img" [src]="url" alt="" /></span>
-    } @else {
+    } @else if (!clientLogo()) {
       <svg class="badge__icon" [lucideIcon]="icon()" aria-hidden="true"></svg>
     }
-    @if (shortened()) {
+    @if (iconOnly()) {
+      <span class="visually-hidden">{{ name() }}</span>
+    } @else if (shortened()) {
       <span class="badge__name" aria-hidden="true">{{ label() }}</span>
       <span class="visually-hidden">{{ name() }}</span>
     } @else {

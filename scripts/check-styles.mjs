@@ -93,6 +93,10 @@ const PAIRS = [
   ...TEXT_ON_SURFACES.flatMap((text) => SURFACES.map((surface) => [text, surface])),
   ['--color-on-accent', '--color-accent'],
   ['--color-status-blocked', '--color-error-surface'],
+  // Side menu (issue #66)
+  ['--color-text', '--color-sidebar'],
+  ['--color-text-secondary', '--color-sidebar'],
+  ['--color-nav-active-text', '--color-nav-active'],
 ];
 
 for (const [name, tokens] of [

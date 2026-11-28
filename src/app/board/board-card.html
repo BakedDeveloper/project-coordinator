@@ -4,6 +4,7 @@
   class="card"
   [class.card--blocked]="task().isBlocked"
   [class.card--no-project]="!showProject()"
+  [class.card--clean]="clean()"
   [style.--project-color]="color()"
   (click)="opened.emit(card)"
 >
@@ -13,11 +14,20 @@
         [projectId]="task().projectId"
         [name]="task().projectName"
         [color]="color()"
+        [plain]="true"
       />
+      @if (rank(); as r) {
+        <span class="card__rank">#{{ r }}<span class="visually-hidden"> in priorità.</span></span>
+      }
     </span>
   }
   <span class="card__title">{{ task().title }}</span>
   <span class="card__foot">
+    @if (!showProject()) {
+      @if (rank(); as r) {
+        <span class="card__rank">#{{ r }}<span class="visually-hidden"> in priorità.</span></span>
+      }
+    }
     @if (busy()) {
       <span class="card__date">Salvo…</span>
     } @else if (date(); as d) {

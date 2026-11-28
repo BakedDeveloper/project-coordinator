@@ -6,8 +6,8 @@ import { TaskService } from '../data/task.service';
 import { NewTask } from './new-task';
 
 const PROJECTS: ProjectLink[] = [
-  { id: 'p1', name: 'Reply - Fleet', status: 'active', color: null },
-  { id: 'p2', name: 'Vecchio', status: 'closed', color: null },
+  { id: 'p1', name: 'Reply - Fleet', scope: 'work', status: 'active', color: null },
+  { id: 'p2', name: 'Vecchio', scope: 'personal', status: 'closed', color: null },
 ];
 
 async function render(projectId: string | null, create = vi.fn(() => Promise.resolve('new'))) {

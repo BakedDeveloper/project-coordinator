@@ -92,6 +92,8 @@
                       [today]="today()"
                       [showProject]="showProject()"
                       [busy]="isPending(task)"
+                      [showRank]="settings.showRank()"
+                      [clean]="settings.cardStyle() === 'clean'"
                       (opened)="openDetail(task, $event)"
                     />
                   </li>

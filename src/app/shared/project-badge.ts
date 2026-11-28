@@ -7,7 +7,8 @@ import { projectIcon } from './project-icons';
 /**
  * The badge of a project: for work projects the client logo on a white tile, then, in the
  * project colour, the real project logo (or its drawn icon, or a generic one) and the short
- * name. Never initials.
+ * name. Never initials. A logo is enough: with the client logo and no project logo there is no
+ * icon (issue #66).
  *
  * Screen readers get the full project name; the logo and the icon are decorative.
  */
@@ -27,6 +28,13 @@ export class ProjectBadge {
   readonly color = input.required<string>();
   /** Larger badge, for the page header. */
   readonly large = input(false);
+  /**
+   * Only the logo tile is coloured; the name is written in the project colour (cards and
+   * side menu, issue #66).
+   */
+  readonly plain = input(false);
+  /** Only the tile: the name is left to screen readers (reduced side menu). */
+  readonly iconOnly = input(false);
 
   private readonly all = signal<ReadonlyMap<string, ProjectBadgeData> | null>(null);
   private readonly badge = computed(() => this.all()?.get(this.projectId()) ?? null);

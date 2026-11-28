@@ -28,6 +28,12 @@ export const routes: Routes = [
           import('./all-projects/all-projects.page').then((m) => m.AllProjectsPage),
       },
       {
+        path: 'personalizzazione',
+        title: 'Personalizzazione · Coordinatore',
+        loadComponent: () =>
+          import('./settings/personalization.page').then((m) => m.PersonalizationPage),
+      },
+      {
         path: 'progetti/:id',
         // The page replaces it with the project name once loaded.
         title: 'Progetto · Coordinatore',
